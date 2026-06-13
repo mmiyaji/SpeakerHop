@@ -1,0 +1,30 @@
+<Application
+    x:Class="SpeakerHop.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{ThemeResource SolidBackgroundFillColorBase}" />
+                    <StaticResource x:Key="AppCardBackgroundBrush" ResourceKey="CardBackgroundFillColorDefaultBrush" />
+                    <StaticResource x:Key="AppCardBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{ThemeResource SolidBackgroundFillColorBase}" />
+                    <StaticResource x:Key="AppCardBackgroundBrush" ResourceKey="CardBackgroundFillColorDefaultBrush" />
+                    <StaticResource x:Key="AppCardBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="AppCardBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="AppCardBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
