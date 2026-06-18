@@ -2,6 +2,12 @@
 
 WinUI 3 desktop app for switching the Windows default audio output device from the tray icon or global shortcuts.
 
+![SpeakerHop overview with actual app screenshot](docs/images/speakerhop-readme-overview.png)
+
+SpeakerHop is a small Windows tray utility for people who frequently move audio between speakers, headphones, monitors, TVs, and virtual devices. Choose the output devices that should be part of the cycle, then switch between them from the tray icon or a global shortcut without opening Windows settings.
+
+The README image uses an actual light-theme English SpeakerHop screenshot embedded in a generated presentation background. The Devices page lets you select which active render endpoints are included in the switching cycle. Disconnected or unused outputs can stay out of the rotation, while notifications confirm each successful switch.
+
 ## Features
 
 - Left-navigation WinUI 3 settings window.
