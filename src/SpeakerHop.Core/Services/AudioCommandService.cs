@@ -4,15 +4,17 @@ namespace SpeakerHop.Services;
 
 public sealed class AudioCommandService
 {
-    private readonly AudioDeviceService _audio;
-    private readonly SettingsService _settings;
+    private readonly IAudioDeviceService _audio;
+    private readonly ISettingsService _settings;
+    private readonly TimeProvider _timeProvider;
 
     public event EventHandler<AudioCommandNotification>? StatusChanged;
 
-    public AudioCommandService(AudioDeviceService audio, SettingsService settings)
+    public AudioCommandService(IAudioDeviceService audio, ISettingsService settings, TimeProvider? timeProvider = null)
     {
         _audio = audio;
         _settings = settings;
+        _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
     public IReadOnlyList<AudioDeviceInfo> GetDevices()
@@ -21,7 +23,7 @@ public sealed class AudioCommandService
         {
             var cycleIds = _settings.Current.CycleDeviceIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
             var devices = _audio.GetRenderDevices();
-            var now = DateTimeOffset.Now;
+            var now = _timeProvider.GetUtcNow();
             foreach (var device in devices)
             {
                 device.IncludeInCycle = cycleIds.Contains(device.Id);

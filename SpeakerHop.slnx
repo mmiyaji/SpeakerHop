@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/SpeakerHop.Core/SpeakerHop.Core.csproj" />
     <Project Path="src/SpeakerHop/SpeakerHop.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SpeakerHop.Tests/SpeakerHop.Tests.csproj" />
   </Folder>
 </Solution>

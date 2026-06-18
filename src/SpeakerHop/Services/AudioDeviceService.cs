@@ -4,9 +4,9 @@ using NAudio.CoreAudioApi;
 
 namespace SpeakerHop.Services;
 
-public sealed class AudioDeviceService
+public sealed class AudioDeviceService : IAudioDeviceService
 {
-    public List<AudioDeviceInfo> GetRenderDevices()
+    public IReadOnlyList<AudioDeviceInfo> GetRenderDevices()
     {
         using var enumerator = new MMDeviceEnumerator();
         using var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);

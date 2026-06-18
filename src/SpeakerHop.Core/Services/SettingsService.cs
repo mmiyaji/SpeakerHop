@@ -4,17 +4,30 @@ using SpeakerHop.Models;
 namespace SpeakerHop.Services;
 
 public sealed class SettingsService
+    : ISettingsService
 {
     private readonly string _settingsPath;
     private readonly JsonSerializerOptions _serializerOptions = new() { WriteIndented = true };
 
     public SettingsService()
+        : this(DefaultSettingsPath())
     {
-        var directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "SpeakerHop");
-        Directory.CreateDirectory(directory);
-        _settingsPath = Path.Combine(directory, "settings.json");
+    }
+
+    public SettingsService(string settingsPath)
+    {
+        if (string.IsNullOrWhiteSpace(settingsPath))
+        {
+            throw new ArgumentException("Settings path must not be empty.", nameof(settingsPath));
+        }
+
+        var directory = Path.GetDirectoryName(settingsPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        _settingsPath = settingsPath;
     }
 
     public AppSettings Current { get; private set; } = new();
@@ -60,5 +73,13 @@ public sealed class SettingsService
 
         Current.InitialLaunchCompleted = true;
         Save();
+    }
+
+    private static string DefaultSettingsPath()
+    {
+        var directory = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "SpeakerHop");
+        return Path.Combine(directory, "settings.json");
     }
 }
