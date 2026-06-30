@@ -1,8 +1,10 @@
 param(
     [string]$Configuration = "Release",
     [string]$Platform = "x64",
-    [string]$Version = "1.0.0.0",
-    [string]$Publisher = "CN=SpeakerHop"
+    [string]$Version = "1.0.22.0",
+    [string]$PackageName = "mmiyaji.SpeakerHop",
+    [string]$Publisher = "CN=663C5D03-791A-4B2C-8509-629FA1CA125A",
+    [string]$PublisherDisplayName = "mmiyaji"
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,6 +31,11 @@ Get-ChildItem $buildOutput -Force | Where-Object { $_.Name -ne "publish" } | For
     Copy-Item $_.FullName (Join-Path $packageRoot $_.Name) -Recurse -Force
 }
 
+$appPri = Join-Path $packageRoot "SpeakerHop.pri"
+if (Test-Path $appPri) {
+    Move-Item $appPri (Join-Path $packageRoot "resources.pri") -Force
+}
+
 $manifest = @"
 <?xml version="1.0" encoding="utf-8"?>
 <Package
@@ -37,10 +44,10 @@ $manifest = @"
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   IgnorableNamespaces="uap desktop rescap">
-  <Identity Name="SpeakerHop" Publisher="$Publisher" Version="$Version" ProcessorArchitecture="$Platform" />
+  <Identity Name="$PackageName" Publisher="$Publisher" Version="$Version" ProcessorArchitecture="$Platform" />
   <Properties>
     <DisplayName>SpeakerHop</DisplayName>
-    <PublisherDisplayName>SpeakerHop</PublisherDisplayName>
+    <PublisherDisplayName>$PublisherDisplayName</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
