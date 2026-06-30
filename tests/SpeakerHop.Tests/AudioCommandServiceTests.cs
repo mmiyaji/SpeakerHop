@@ -40,6 +40,33 @@ public sealed class AudioCommandServiceTests
     }
 
     [Fact]
+    public void GetDevices_MigratesSelectedRememberedDeviceToActiveDeviceWithSameName()
+    {
+        var settings = new FakeSettingsService();
+        settings.Current.Language = LocalizationService.English;
+        settings.Current.CycleDeviceIds = ["old-monitor"];
+        settings.Current.RememberedAudioDevices.Add(new RememberedAudioDevice
+        {
+            Id = "old-monitor",
+            Name = "Monitor (NVIDIA High Definition Audio)",
+            LastSeen = FixedNow.AddDays(-1)
+        });
+        var audio = new FakeAudioDeviceService
+        {
+            Devices = [Device("new-monitor", "Monitor (NVIDIA High Definition Audio)", isDefault: true)]
+        };
+        var service = CreateService(audio, settings);
+
+        var devices = service.GetDevices();
+
+        var device = Assert.Single(devices);
+        Assert.Equal("new-monitor", device.Id);
+        Assert.True(device.IsConnected);
+        Assert.True(device.IncludeInCycle);
+        Assert.Equal(["new-monitor"], settings.Current.CycleDeviceIds);
+    }
+
+    [Fact]
     public void GetDevices_UpdatesRememberedDevicesOnlyWhenChanged()
     {
         var settings = new FakeSettingsService();
