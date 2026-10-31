@@ -6,6 +6,7 @@ All notable changes to SpeakerHop are recorded here. Version numbers distinguish
 
 - Refined settings layouts with compact, aligned controls and a visible highlight for the active output device.
 - Improved shortcut editing and safer registration behavior. New installs use less common default shortcut combinations; existing saved bindings are preserved. Output mute and microphone mute remain separate actions, and no binding is assigned automatically to the microphone action.
+- Named Space, editing, numpad, IME, browser and media keys; punctuation follows the active Windows keyboard layout. Modified Tab/Enter/Escape combinations can be captured while bare keys retain dialog navigation.
 - Added confirmation before changing the application language and display language names consistently.
 - Localized copyright, terms, privacy, and third-party notices for Japanese, English, Simplified Chinese, Traditional Chinese, Korean, German, French, and Spanish.
 - Improved settings persistence, startup handling, single-instance activation across package updates, and installer staging and rollback.

@@ -104,7 +104,7 @@ public sealed partial class MainWindow
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap
         };
-        var gestureText = hotkey.Key == 0 ? T("shortcuts.unassigned") : hotkey.GestureText;
+        var gestureText = hotkey.Key == 0 ? T("shortcuts.unassigned") : KeyboardKeyDisplay.GestureText(hotkey);
         var keyButton = new Button
         {
             Content = TextBlock(gestureText, 12, TextBrush),
@@ -272,10 +272,12 @@ public sealed partial class MainWindow
     {
         var gesture = new TextBlock
         {
-            Text = hotkey.GestureText,
+            Text = KeyboardKeyDisplay.GestureText(hotkey),
             FontSize = 24,
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             Foreground = TextBrush,
+            TextWrapping = TextWrapping.Wrap,
+            TextAlignment = TextAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 12, 0, 4)
         };
@@ -330,9 +332,9 @@ public sealed partial class MainWindow
             var preview = CloneHotkey(hotkey);
             preview.Modifiers = capturedModifiers;
             preview.Key = capturedKey;
-            gesture.Text = preview.GestureText;
+            gesture.Text = KeyboardKeyDisplay.GestureText(preview);
             error.Text = duplicate
-                ? string.Format(T("shortcuts.registrationFailed"), 1, preview.GestureText)
+                ? string.Format(T("shortcuts.registrationFailed"), 1, KeyboardKeyDisplay.GestureText(preview))
                 : "";
             dialog.IsPrimaryButtonEnabled = capturedKey is >= 1 and <= 0xFF && !IsModifierKey(capturedKey) && !duplicate;
         }
@@ -353,7 +355,9 @@ public sealed partial class MainWindow
             if (code >= 0 && message is keyDown or sysKeyDown)
             {
                 var key = unchecked((uint)Marshal.ReadInt32(lParam));
-                if (key is 0x09 or 0x0D or 0x1B)
+                // Bare Tab/Enter/Escape still navigate, save or cancel the dialog.
+                // With modifiers these are assignable shortcuts, like other keys.
+                if (key is 0x09 or 0x0D or 0x1B && pressedModifiers == 0)
                 {
                     return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
                 }
@@ -450,7 +454,7 @@ public sealed partial class MainWindow
     private static string ModifierText(uint modifiers)
     {
         var preview = new HotkeyDefinition { Modifiers = modifiers, Key = 0 };
-        return preview.GestureText.Replace(" + VK 0x00", "", StringComparison.Ordinal);
+        return preview.FormatGesture(string.Empty).TrimEnd(' ', '+');
     }
 
     private static HotkeyDefinition CloneHotkey(HotkeyDefinition hotkey) => new()
@@ -481,6 +485,6 @@ public sealed partial class MainWindow
 
     private string HotkeyFailureText(HotkeyRegistrationFailure failure)
     {
-        return $"{failure.Hotkey.GestureText} ({T("shortcuts.errorCode")} {failure.ErrorCode})";
+        return $"{KeyboardKeyDisplay.GestureText(failure.Hotkey)} ({T("shortcuts.errorCode")} {failure.ErrorCode})";
     }
 }

@@ -218,7 +218,7 @@ public sealed partial class MainWindow
             string.Equals(hotkey.DeviceId, device.Id, StringComparison.OrdinalIgnoreCase));
         var shortcutButton = new Button
         {
-            Content = assignedHotkey?.GestureText ?? T("shortcuts.key"),
+            Content = assignedHotkey is null ? T("shortcuts.key") : KeyboardKeyDisplay.GestureText(assignedHotkey),
             MinWidth = 112,
             MinHeight = Controls.UiMetrics.ButtonMinHeight,
             Padding = Controls.UiMetrics.ButtonPadding,
@@ -229,7 +229,7 @@ public sealed partial class MainWindow
         SetAutomation(shortcutButton, $"Devices.Shortcut.{device.Id}",
             $"{T("shortcuts.key")}: {device.Name}");
         ToolTipService.SetToolTip(shortcutButton,
-            assignedHotkey is null ? T("action.setDevice") : assignedHotkey.GestureText);
+            assignedHotkey is null ? T("action.setDevice") : KeyboardKeyDisplay.GestureText(assignedHotkey));
         shortcutButton.Click += async (_, _) => await ConfigureDeviceShortcutAsync(device);
 
         var layoutMode = CurrentLayoutMode();
