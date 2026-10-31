@@ -16,8 +16,25 @@ public static class StartupRegistration
             return await SetPackagedStartupAsync(enabled);
         }
 
-        await Task.Run(() => SetRegistryStartup(enabled));
-        return StartupRegistrationResult.Enabled;
+        return await Task.Run(() => SetRegistryStartup(enabled));
+    }
+
+    public static async Task<bool?> GetEnabledAsync()
+    {
+        if (IsPackaged())
+        {
+            try
+            {
+                var startupTask = await StartupTask.GetAsync(StartupTaskId);
+                return startupTask.State is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        return await Task.Run(GetRegistryStartupEnabled);
     }
 
     private static async Task<StartupRegistrationResult> SetPackagedStartupAsync(bool enabled)
@@ -47,25 +64,55 @@ public static class StartupRegistration
         }
     }
 
-    private static void SetRegistryStartup(bool enabled)
+    private static StartupRegistrationResult SetRegistryStartup(bool enabled)
     {
-        using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
-        if (key is null)
+        try
         {
-            return;
-        }
-
-        if (enabled)
-        {
-            var path = Environment.ProcessPath;
-            if (!string.IsNullOrWhiteSpace(path))
+            if (enabled)
             {
+                var path = Environment.ProcessPath;
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    return StartupRegistrationResult.Unsupported;
+                }
+
+                using var key = Registry.CurrentUser.CreateSubKey(RunKey, writable: true);
+                if (key is null)
+                {
+                    return StartupRegistrationResult.Unsupported;
+                }
+
                 key.SetValue(ValueName, $"\"{path}\"");
+                return GetRegistryStartupEnabled() == true
+                    ? StartupRegistrationResult.Enabled
+                    : StartupRegistrationResult.Unsupported;
             }
+
+            using (var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true))
+            {
+                key?.DeleteValue(ValueName, throwOnMissingValue: false);
+            }
+
+            return GetRegistryStartupEnabled() == false
+                ? StartupRegistrationResult.Disabled
+                : StartupRegistrationResult.Unsupported;
         }
-        else
+        catch
         {
-            key.DeleteValue(ValueName, throwOnMissingValue: false);
+            return StartupRegistrationResult.Unsupported;
+        }
+    }
+
+    private static bool? GetRegistryStartupEnabled()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: false);
+            return key?.GetValue(ValueName) is string value && !string.IsNullOrWhiteSpace(value);
+        }
+        catch
+        {
+            return null;
         }
     }
 

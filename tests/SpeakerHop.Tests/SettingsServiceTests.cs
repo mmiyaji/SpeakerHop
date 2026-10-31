@@ -85,6 +85,77 @@ public sealed class SettingsServiceTests
     }
 
     [Fact]
+    public void Load_NormalizesNullDuplicateAndOutOfRangeSettings()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var path = Path.Combine(directory.Path, "settings.json");
+        File.WriteAllText(path, """
+            {
+              "Language": "unsupported",
+              "Theme": null,
+              "CycleDeviceIds": [" speaker ", null, "SPEAKER", ""],
+              "RememberedAudioDevices": [
+                { "Id": "device", "Name": null, "LastSeen": "2026-01-01T00:00:00+00:00" },
+                null
+              ],
+              "Hotkeys": [
+                { "Id": "00000000-0000-0000-0000-000000000000", "Name": null, "Action": 999, "Modifiers": 65535, "Key": 0, "VolumeStep": -2147483648 },
+                null
+              ]
+            }
+            """);
+        var service = new SettingsService(path);
+
+        service.Load();
+
+        Assert.Equal("system", service.Current.Language);
+        Assert.Equal("system", service.Current.Theme);
+        Assert.Equal(["speaker"], service.Current.CycleDeviceIds);
+        var remembered = Assert.Single(service.Current.RememberedAudioDevices);
+        Assert.Equal("device", remembered.Name);
+        var hotkey = Assert.Single(service.Current.Hotkeys);
+        Assert.NotEqual(Guid.Empty, hotkey.Id);
+        Assert.Equal(HotkeyActionType.CycleDevice, hotkey.Action);
+        Assert.Equal((uint)0x000F, hotkey.Modifiers);
+        Assert.Equal((uint)0x41, hotkey.Key);
+        Assert.Equal(100, hotkey.VolumeStep);
+    }
+
+    [Fact]
+    public void Load_WhenExistingFileIsLocked_FallsBackToDefaults()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var path = Path.Combine(directory.Path, "settings.json");
+        File.WriteAllText(path, "{\"Language\":\"en-US\"}");
+        using var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        var service = new SettingsService(path);
+
+        service.Load();
+
+        Assert.Equal("system", service.Current.Language);
+    }
+
+    [Fact]
+    public void Save_WhenDestinationCannotBeReplaced_PreservesExistingFileAndCleansTemporaryFile()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var path = Path.Combine(directory.Path, "settings.json");
+        const string original = "{\"Language\":\"en-US\"}";
+        File.WriteAllText(path, original);
+        using var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        var service = new SettingsService(path);
+        service.Current.Language = LocalizationService.Japanese;
+
+        var exception = Record.Exception(service.Save);
+        Assert.True(exception is IOException or UnauthorizedAccessException);
+
+        locked.Position = 0;
+        using var reader = new StreamReader(locked, leaveOpen: true);
+        Assert.Equal(original, reader.ReadToEnd());
+        Assert.Empty(Directory.GetFiles(directory.Path, "*.tmp"));
+    }
+
+    [Fact]
     public void MarkInitialLaunchCompleted_WhenNotCompleted_SetsFlagAndSaves()
     {
         using var directory = TemporaryDirectory.Create();

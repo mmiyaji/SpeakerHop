@@ -40,7 +40,7 @@ public sealed class AudioCommandServiceTests
     }
 
     [Fact]
-    public void GetDevices_MigratesSelectedRememberedDeviceToActiveDeviceWithSameName()
+    public void GetDevices_WhenActiveDeviceHasSameName_KeepsRememberedSelectionDisconnected()
     {
         var settings = new FakeSettingsService();
         settings.Current.Language = LocalizationService.English;
@@ -59,11 +59,12 @@ public sealed class AudioCommandServiceTests
 
         var devices = service.GetDevices();
 
-        var device = Assert.Single(devices);
-        Assert.Equal("new-monitor", device.Id);
-        Assert.True(device.IsConnected);
-        Assert.True(device.IncludeInCycle);
-        Assert.Equal(["new-monitor"], settings.Current.CycleDeviceIds);
+        Assert.Equal(["new-monitor", "old-monitor"], devices.Select(device => device.Id));
+        Assert.True(devices[0].IsConnected);
+        Assert.False(devices[0].IncludeInCycle);
+        Assert.False(devices[1].IsConnected);
+        Assert.True(devices[1].IncludeInCycle);
+        Assert.Equal(["old-monitor"], settings.Current.CycleDeviceIds);
     }
 
     [Fact]
@@ -164,6 +165,65 @@ public sealed class AudioCommandServiceTests
         service.CycleDevice();
 
         Assert.Equal(["b"], audio.SetDefaultRenderDeviceCalls);
+    }
+
+    [Fact]
+    public void CycleDevice_UsesSavedOrderAcrossThreeDevicesWhenEnumerationMovesDefaultFirst()
+    {
+        var settings = EnglishSettings();
+        settings.Current.CycleDeviceIds = ["a", "b", "c"];
+        var audio = new FakeAudioDeviceService
+        {
+            Devices = [Device("a", "A", isDefault: true), Device("b", "B"), Device("c", "C")],
+            ReorderDefaultFirst = true,
+            UpdateDefaultOnSet = true
+        };
+        var service = CreateService(audio, settings);
+
+        service.CycleDevice();
+        service.CycleDevice();
+        service.CycleDevice();
+        service.CycleDevice();
+
+        Assert.Equal(["b", "c", "a", "b"], audio.SetDefaultRenderDeviceCalls);
+    }
+
+    [Fact]
+    public void GetDevices_WhenRememberingDeviceCannotBeSaved_StillReturnsDevices()
+    {
+        var settings = EnglishSettings();
+        settings.ThrowOnSave = true;
+        var audio = new FakeAudioDeviceService
+        {
+            Devices = [Device("speaker", "Speakers", isDefault: true)]
+        };
+        var service = CreateService(audio, settings);
+
+        var devices = service.GetDevices();
+
+        Assert.Equal("speaker", Assert.Single(devices).Id);
+        Assert.Equal(1, settings.SaveCount);
+    }
+
+    [Fact]
+    public void GetDevices_DoesNotRewriteLastSeenWithinPersistenceInterval()
+    {
+        var settings = EnglishSettings();
+        settings.Current.RememberedAudioDevices.Add(new RememberedAudioDevice
+        {
+            Id = "speaker",
+            Name = "Speakers",
+            LastSeen = FixedNow.AddMinutes(-30)
+        });
+        var service = CreateService(new FakeAudioDeviceService
+        {
+            Devices = [Device("speaker", "Speakers")]
+        }, settings);
+
+        _ = service.GetDevices();
+
+        Assert.Equal(FixedNow.AddMinutes(-30), Assert.Single(settings.Current.RememberedAudioDevices).LastSeen);
+        Assert.Equal(0, settings.SaveCount);
     }
 
     [Fact]
@@ -342,10 +402,15 @@ public sealed class AudioCommandServiceTests
     {
         public AppSettings Current { get; } = new();
         public int SaveCount { get; private set; }
+        public bool ThrowOnSave { get; set; }
 
         public void Save()
         {
             SaveCount++;
+            if (ThrowOnSave)
+            {
+                throw new IOException("settings unavailable");
+            }
         }
     }
 
@@ -358,6 +423,8 @@ public sealed class AudioCommandServiceTests
         public Exception? ToggleDefaultMuteException { get; init; }
         public float VolumeResult { get; init; } = 0.5f;
         public Queue<bool> ToggleDefaultMuteResults { get; init; } = new([true]);
+        public bool ReorderDefaultFirst { get; init; }
+        public bool UpdateDefaultOnSet { get; init; }
         public List<string> SetDefaultRenderDeviceCalls { get; } = [];
         public List<int> ChangeDefaultVolumeCalls { get; } = [];
         public int ToggleDefaultMuteCallCount { get; private set; }
@@ -369,7 +436,21 @@ public sealed class AudioCommandServiceTests
                 throw GetRenderDevicesException;
             }
 
-            return Devices;
+            var devices = Devices;
+            if (UpdateDefaultOnSet && SetDefaultRenderDeviceCalls.Count > 0)
+            {
+                var currentId = SetDefaultRenderDeviceCalls[^1];
+                devices = Devices.Select(device => new AudioDeviceInfo
+                {
+                    Id = device.Id,
+                    Name = device.Name,
+                    IsDefault = string.Equals(device.Id, currentId, StringComparison.OrdinalIgnoreCase)
+                }).ToList();
+            }
+
+            return ReorderDefaultFirst
+                ? devices.OrderByDescending(device => device.IsDefault).ToList()
+                : devices;
         }
 
         public void SetDefaultRenderDevice(string deviceId)

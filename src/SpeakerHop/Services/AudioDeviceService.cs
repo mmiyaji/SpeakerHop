@@ -11,14 +11,22 @@ public sealed class AudioDeviceService : IAudioDeviceService
         using var enumerator = new MMDeviceEnumerator();
         using var defaultDevice = enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
         var defaultId = defaultDevice.ID;
-        return enumerator
-            .EnumerateAudioEndPoints(DataFlow.Render, NAudio.CoreAudioApi.DeviceState.Active)
-            .Select(device => new AudioDeviceInfo
+        var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, NAudio.CoreAudioApi.DeviceState.Active);
+        var result = new List<AudioDeviceInfo>(devices.Count);
+        foreach (var device in devices)
+        {
+            using (device)
             {
-                Id = device.ID,
-                Name = device.FriendlyName,
-                IsDefault = string.Equals(defaultId, device.ID, StringComparison.OrdinalIgnoreCase)
-            })
+                result.Add(new AudioDeviceInfo
+                {
+                    Id = device.ID,
+                    Name = device.FriendlyName,
+                    IsDefault = string.Equals(defaultId, device.ID, StringComparison.OrdinalIgnoreCase)
+                });
+            }
+        }
+
+        return result
             .OrderByDescending(d => d.IsDefault)
             .ThenBy(d => d.Name)
             .ToList();
@@ -27,9 +35,16 @@ public sealed class AudioDeviceService : IAudioDeviceService
     public void SetDefaultRenderDevice(string deviceId)
     {
         var policyConfig = (IPolicyConfig)(object)new PolicyConfigClient();
-        policyConfig.SetDefaultEndpoint(deviceId, ERole.eConsole);
-        policyConfig.SetDefaultEndpoint(deviceId, ERole.eMultimedia);
-        policyConfig.SetDefaultEndpoint(deviceId, ERole.eCommunications);
+        try
+        {
+            policyConfig.SetDefaultEndpoint(deviceId, ERole.eConsole);
+            policyConfig.SetDefaultEndpoint(deviceId, ERole.eMultimedia);
+            policyConfig.SetDefaultEndpoint(deviceId, ERole.eCommunications);
+        }
+        finally
+        {
+            Marshal.FinalReleaseComObject(policyConfig);
+        }
     }
 
     public float ChangeDefaultVolume(int deltaPercent)

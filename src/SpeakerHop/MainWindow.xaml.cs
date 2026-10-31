@@ -4,6 +4,7 @@ using System.Reflection;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -14,6 +15,8 @@ using Color = Windows.UI.Color;
 using HorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment;
 using Image = Microsoft.UI.Xaml.Controls.Image;
 using Orientation = Microsoft.UI.Xaml.Controls.Orientation;
+using System.Runtime.InteropServices;
+using Windows.UI.ViewManagement;
 
 namespace SpeakerHop;
 
@@ -56,6 +59,29 @@ public sealed class MainWindow : Window
     private TextBlock? _titleText;
     private string _currentPageTag = DevicesTag;
     private bool _hasUnsavedHotkeyChanges;
+    private List<HotkeyDefinition>? _hotkeyDraft;
+    private int _automationSequence;
+    private int _layoutMode = -1;
+
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern short GetAsyncKeyState(int virtualKey);
+
+    private delegate IntPtr LowLevelKeyboardProc(int code, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr SetWindowsHookEx(int hookId, LowLevelKeyboardProc callback, IntPtr module, uint threadId);
+
+    [DllImport("user32.dll")]
+    private static extern bool UnhookWindowsHookEx(IntPtr hook);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr CallNextHookEx(IntPtr hook, int code, IntPtr wParam, IntPtr lParam);
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    private static extern IntPtr GetModuleHandle(string? moduleName);
 
     public IntPtr Hwnd { get; }
 
@@ -65,6 +91,7 @@ public sealed class MainWindow : Window
         Title = "SpeakerHop";
         BuildShell();
         ConfigureWindow();
+        _root.SizeChanged += (_, _) => UpdateResponsiveLayout();
     }
 
     public void ShowSettings()
@@ -76,7 +103,7 @@ public sealed class MainWindow : Window
 
     public void ShowHome()
     {
-        SelectPage(DevicesTag);
+        ShowPage(DevicesTag);
     }
 
     private void BuildShell()
@@ -103,12 +130,16 @@ public sealed class MainWindow : Window
         _navigation.PaneTitle = "SpeakerHop";
         _navigation.IsSettingsVisible = false;
         _navigation.IsBackButtonVisible = NavigationViewBackButtonVisible.Collapsed;
-        _navigation.PaneDisplayMode = NavigationViewPaneDisplayMode.Left;
+        _navigation.PaneDisplayMode = NavigationViewPaneDisplayMode.Auto;
+        _navigation.CompactModeThresholdWidth = 720;
+        _navigation.ExpandedModeThresholdWidth = 1000;
         _navigation.OpenPaneLength = 220;
         _navigation.CompactPaneLength = 48;
         BuildNavigationItems();
         _navigation.Content = _contentScroll;
         _navigation.SelectionChanged += Navigation_SelectionChanged;
+        SetAutomation(_navigation, "Navigation.Main", "SpeakerHop");
+        SetAutomation(_status, "Status.Current", "Status");
         Grid.SetRow(_navigation, 1);
         _root.Children.Add(_navigation);
 
@@ -215,6 +246,39 @@ public sealed class MainWindow : Window
         UpdateTitleBarColors();
     }
 
+    private int CurrentLayoutMode()
+    {
+        var width = _root.ActualWidth;
+        if (width <= 0 || width >= 900)
+        {
+            return 0;
+        }
+
+        return width >= 620 ? 1 : 2;
+    }
+
+    private void UpdateResponsiveLayout()
+    {
+        var mode = CurrentLayoutMode();
+        if (mode == _layoutMode)
+        {
+            return;
+        }
+
+        _layoutMode = mode;
+        _contentScroll.Padding = mode switch
+        {
+            0 => new Thickness(32, 28, 32, 32),
+            1 => new Thickness(20, 22, 20, 24),
+            _ => new Thickness(14, 18, 14, 20)
+        };
+
+        if (_content.Children.Count != 0)
+        {
+            ShowPage(_currentPageTag);
+        }
+    }
+
     private static NavigationViewItem NavItem(string text, string tag, string glyph)
     {
         var item = new NavigationViewItem
@@ -224,6 +288,7 @@ public sealed class MainWindow : Window
             Icon = new FontIcon { Glyph = glyph }
         };
         AddFallbackWinUiResources(item.Resources);
+        SetAutomation(item, $"Navigation.{tag}", text);
         return item;
     }
 
@@ -270,7 +335,13 @@ public sealed class MainWindow : Window
             .FirstOrDefault(entry => string.Equals(entry.Tag as string, tag, StringComparison.OrdinalIgnoreCase));
         if (item is not null)
         {
+            if (ReferenceEquals(_navigation.SelectedItem, item))
+            {
+                ShowPage(tag);
+                return;
+            }
             _navigation.SelectedItem = item;
+            return;
         }
 
         ShowPage(tag);
@@ -279,6 +350,8 @@ public sealed class MainWindow : Window
     private void ShowPage(string tag)
     {
         _currentPageTag = tag;
+        _automationSequence = 0;
+        SetStatus("");
         _status.Foreground = SecondaryTextBrush;
         switch (tag)
         {
@@ -346,6 +419,8 @@ public sealed class MainWindow : Window
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
+        AddFallbackWinUiResources(toggle.Resources);
+        SetAutomation(toggle, "Devices.Notifications", T("devices.notification"));
         toggle.Toggled += (_, _) =>
         {
             AppServices.Settings.Current.NotifyOnDeviceSwitch = toggle.IsOn;
@@ -366,10 +441,22 @@ public sealed class MainWindow : Window
     {
         _devices.Clear();
         _cycleSelection.Clear();
-        foreach (var device in AppServices.Commands.GetDevices())
+        try
         {
-            _devices.Add(device);
-            _cycleSelection[device.Id] = device.IncludeInCycle;
+            foreach (var device in AppServices.Commands.GetDevices())
+            {
+                _devices.Add(device);
+                _cycleSelection[device.Id] = device.IncludeInCycle;
+            }
+
+            if (_devices.Count == 0)
+            {
+                SetStatus(T("common.none"));
+            }
+        }
+        catch (Exception ex)
+        {
+            SetStatus(ex.Message);
         }
     }
 
@@ -381,6 +468,8 @@ public sealed class MainWindow : Window
             IsChecked = selected,
             VerticalAlignment = VerticalAlignment.Center
         };
+        SetAutomation(checkBox, $"Devices.Include.{device.Id}",
+            $"{device.Name}. {T("devices.subtitle")}");
         var (primaryName, secondaryName) = SplitDeviceName(device.Name);
         var namePanel = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
         namePanel.Children.Add(new TextBlock
@@ -421,6 +510,52 @@ public sealed class MainWindow : Window
             VerticalAlignment = VerticalAlignment.Center
         };
 
+        var switchButton = new Button
+        {
+            Content = T("action.setDevice"),
+            IsEnabled = device.IsConnected && !device.IsDefault,
+            MinWidth = 112,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        AddFallbackWinUiResources(switchButton.Resources);
+        SetAutomation(switchButton, $"Devices.Switch.{device.Id}",
+            $"{T("action.setDevice")}: {device.Name}");
+        switchButton.Click += (_, _) => SwitchToDevice(device);
+
+        var assignedHotkey = AppServices.Settings.Current.Hotkeys.FirstOrDefault(hotkey =>
+            hotkey.Action == HotkeyActionType.SetDevice &&
+            string.Equals(hotkey.DeviceId, device.Id, StringComparison.OrdinalIgnoreCase));
+        var shortcutButton = new Button
+        {
+            Content = assignedHotkey?.GestureText ?? T("shortcuts.key"),
+            MinWidth = 112,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        AddFallbackWinUiResources(shortcutButton.Resources);
+        SetAutomation(shortcutButton, $"Devices.Shortcut.{device.Id}",
+            $"{T("shortcuts.key")}: {device.Name}");
+        ToolTipService.SetToolTip(shortcutButton,
+            assignedHotkey is null ? T("action.setDevice") : assignedHotkey.GestureText);
+        shortcutButton.Click += async (_, _) => await ConfigureDeviceShortcutAsync(device);
+
+        var layoutMode = CurrentLayoutMode();
+        var actions = new StackPanel
+        {
+            Orientation = layoutMode == 2 ? Orientation.Vertical : Orientation.Horizontal,
+            Spacing = 8,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = layoutMode == 2 ? HorizontalAlignment.Stretch : HorizontalAlignment.Right
+        };
+        if (layoutMode == 2)
+        {
+            shortcutButton.HorizontalAlignment = HorizontalAlignment.Stretch;
+            switchButton.HorizontalAlignment = HorizontalAlignment.Stretch;
+        }
+        actions.Children.Add(shortcutButton);
+        actions.Children.Add(switchButton);
+
         var row = new Grid { ColumnSpacing = 10 };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -428,14 +563,88 @@ public sealed class MainWindow : Window
         Grid.SetColumn(checkBox, 0);
         Grid.SetColumn(namePanel, 1);
         Grid.SetColumn(defaultBadge, 2);
+        if (layoutMode == 0)
+        {
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            Grid.SetColumn(actions, 3);
+        }
+        else
+        {
+            row.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            row.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(actions, 1);
+            Grid.SetColumn(actions, 1);
+            Grid.SetColumnSpan(actions, 2);
+            actions.Margin = new Thickness(0, 10, 0, 0);
+        }
         row.Children.Add(checkBox);
         row.Children.Add(namePanel);
         row.Children.Add(defaultBadge);
+        row.Children.Add(actions);
 
         checkBox.Checked += (_, _) => UpdateDeviceSelection(device.Id, true);
         checkBox.Unchecked += (_, _) => UpdateDeviceSelection(device.Id, false);
 
         return Card(row);
+    }
+
+    private void SwitchToDevice(AudioDeviceInfo device)
+    {
+        string? status = null;
+        void CaptureStatus(object? sender, AudioCommandNotification notification) => status = notification.Message;
+
+        AppServices.Commands.StatusChanged += CaptureStatus;
+        try
+        {
+            AppServices.Commands.SetDevice(device.Id);
+        }
+        finally
+        {
+            AppServices.Commands.StatusChanged -= CaptureStatus;
+        }
+
+        ShowDevicesPage();
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            SetStatus(status);
+        }
+    }
+
+    private async Task ConfigureDeviceShortcutAsync(AudioDeviceInfo device)
+    {
+        var proposed = AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
+        var hotkey = proposed.FirstOrDefault(entry =>
+            entry.Action == HotkeyActionType.SetDevice &&
+            string.Equals(entry.DeviceId, device.Id, StringComparison.OrdinalIgnoreCase));
+        if (hotkey is null)
+        {
+            hotkey = new HotkeyDefinition
+            {
+                Name = device.Name,
+                Action = HotkeyActionType.SetDevice,
+                DeviceId = device.Id,
+                Enabled = true
+            };
+            proposed.Add(hotkey);
+        }
+
+        if (!await CaptureGestureAsync(hotkey, proposed))
+        {
+            return;
+        }
+
+        var failures = AppServices.Hotkeys.SaveAndReload(proposed);
+        if (failures.Count != 0)
+        {
+            SetStatus(string.Format(T("shortcuts.registrationFailed"), failures.Count,
+                string.Join(", ", failures.Select(HotkeyFailureText))));
+            return;
+        }
+
+        _hotkeyDraft = AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
+        _hasUnsavedHotkeyChanges = false;
+        ShowDevicesPage();
+        SetStatus(T("shortcuts.saved"));
     }
 
     private UIElement DeviceList()
@@ -460,14 +669,19 @@ public sealed class MainWindow : Window
         var currentDeviceIds = _devices
             .Select(device => device.Id)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var rememberedMissingSelections = AppServices.Settings.Current.CycleDeviceIds
-            .Where(id => !currentDeviceIds.Contains(id));
-        var currentSelections = _cycleSelection
+        var selectedCurrentIds = _cycleSelection
             .Where(pair => pair.Value)
-            .Select(pair => pair.Key);
+            .Select(pair => pair.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var preservedOrder = AppServices.Settings.Current.CycleDeviceIds
+            .Where(id => !currentDeviceIds.Contains(id) || selectedCurrentIds.Contains(id));
+        var newlySelected = _devices
+            .Select(device => device.Id)
+            .Where(id => selectedCurrentIds.Contains(id))
+            .Where(id => !AppServices.Settings.Current.CycleDeviceIds.Contains(id, StringComparer.OrdinalIgnoreCase));
 
-        AppServices.Settings.Current.CycleDeviceIds = rememberedMissingSelections
-            .Concat(currentSelections)
+        AppServices.Settings.Current.CycleDeviceIds = preservedOrder
+            .Concat(newlySelected)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
         AppServices.Settings.Save();
@@ -476,6 +690,7 @@ public sealed class MainWindow : Window
 
     private void ShowShortcutsPage()
     {
+        _hotkeyDraft ??= AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
         _content.Children.Clear();
         AddHeader(T("shortcuts.title"), T("shortcuts.subtitle"));
         if (_hasUnsavedHotkeyChanges)
@@ -484,7 +699,7 @@ public sealed class MainWindow : Window
         }
         _content.Children.Add(_status);
 
-        foreach (var hotkey in AppServices.Settings.Current.Hotkeys)
+        foreach (var hotkey in _hotkeyDraft)
         {
             _content.Children.Add(HotkeyRow(hotkey));
         }
@@ -496,6 +711,7 @@ public sealed class MainWindow : Window
 
     private UIElement HotkeyRow(HotkeyDefinition hotkey)
     {
+        var draft = _hotkeyDraft ?? throw new InvalidOperationException("Hotkey draft is not initialized.");
         var panel = new StackPanel { Spacing = 8 };
         panel.Children.Add(new TextBlock
         {
@@ -538,11 +754,13 @@ public sealed class MainWindow : Window
                 MarkHotkeysDirty();
                 ShowShortcutsPage();
             }),
-            (T("shortcuts.key"), () =>
+            (T("shortcuts.key"), async () =>
             {
-                hotkey.Key = NextKey(hotkey.Key);
-                MarkHotkeysDirty();
-                ShowShortcutsPage();
+                if (await CaptureGestureAsync(hotkey, draft))
+                {
+                    MarkHotkeysDirty();
+                    ShowShortcutsPage();
+                }
             }),
             (T("shortcuts.device"), () =>
             {
@@ -559,7 +777,7 @@ public sealed class MainWindow : Window
             }),
             (T("shortcuts.delete"), () =>
             {
-                AppServices.Settings.Current.Hotkeys.Remove(hotkey);
+                draft.Remove(hotkey);
                 MarkHotkeysDirty();
                 ShowShortcutsPage();
             })));
@@ -569,12 +787,17 @@ public sealed class MainWindow : Window
 
     private void AddShortcut()
     {
-        AppServices.Settings.Current.Hotkeys.Add(new HotkeyDefinition
+        _hotkeyDraft ??= AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
+        var usedGestures = _hotkeyDraft.Select(h => (h.Modifiers, h.Key)).ToHashSet();
+        var availableKey = new uint[] { 0x41, 0x53, 0x44, 0x46, 0x26, 0x28, 0x70, 0x71, 0x72 }
+            .FirstOrDefault(key => !usedGestures.Contains((0x0002u | 0x0004u, key)));
+        _hotkeyDraft.Add(new HotkeyDefinition
         {
-            Name = string.Format(T("shortcuts.newName"), AppServices.Settings.Current.Hotkeys.Count + 1),
+            Name = string.Format(T("shortcuts.newName"), _hotkeyDraft.Count + 1),
             Action = HotkeyActionType.CycleDevice,
             Modifiers = 0x0002 | 0x0004,
-            Key = 0x41
+            Key = availableKey == 0 ? 0x41 : availableKey,
+            Enabled = availableKey != 0
         });
         MarkHotkeysDirty();
         ShowShortcutsPage();
@@ -582,8 +805,24 @@ public sealed class MainWindow : Window
 
     private void SaveHotkeys()
     {
-        var failures = AppServices.Hotkeys.SaveAndReload();
-        _hasUnsavedHotkeyChanges = false;
+        _hotkeyDraft ??= AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
+        IReadOnlyList<HotkeyRegistrationFailure> failures;
+        try
+        {
+            failures = AppServices.Hotkeys.SaveAndReload(_hotkeyDraft);
+        }
+        catch (Exception ex)
+        {
+            _hasUnsavedHotkeyChanges = true;
+            SetStatus(ex.Message);
+            return;
+        }
+
+        _hasUnsavedHotkeyChanges = failures.Count != 0;
+        if (failures.Count == 0)
+        {
+            _hotkeyDraft = AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
+        }
         SetStatus(failures.Count == 0
             ? T("shortcuts.saved")
             : string.Format(T("shortcuts.registrationFailed"), failures.Count, string.Join(", ", failures.Select(HotkeyFailureText))));
@@ -593,6 +832,163 @@ public sealed class MainWindow : Window
     {
         _hasUnsavedHotkeyChanges = true;
         SetStatus(T("shortcuts.unsaved"));
+    }
+
+    private async Task<bool> CaptureGestureAsync(
+        HotkeyDefinition hotkey,
+        IReadOnlyCollection<HotkeyDefinition> hotkeys)
+    {
+        var gesture = new TextBlock
+        {
+            Text = hotkey.GestureText,
+            FontSize = 24,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Foreground = TextBrush,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 12, 0, 4)
+        };
+        var hint = new TextBlock
+        {
+            Text = T("shortcuts.captureHint"),
+            Foreground = SecondaryTextBrush,
+            TextWrapping = TextWrapping.Wrap,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+        var error = new TextBlock
+        {
+            Foreground = new SolidColorBrush(Colors.OrangeRed),
+            TextWrapping = TextWrapping.Wrap,
+            HorizontalAlignment = HorizontalAlignment.Center
+        };
+        var content = new StackPanel
+        {
+            Spacing = 6,
+            MinWidth = 380,
+            Children = { hint, gesture, error }
+        };
+        var dialog = new ContentDialog
+        {
+            XamlRoot = _root.XamlRoot,
+            Title = T("shortcuts.key"),
+            Content = content,
+            PrimaryButtonText = T("shortcuts.save"),
+            CloseButtonText = T("common.cancel"),
+            DefaultButton = ContentDialogButton.Primary,
+            IsPrimaryButtonEnabled = true
+        };
+        SetAutomation(dialog, "Shortcuts.CaptureDialog", T("shortcuts.key"));
+
+        var capturedModifiers = hotkey.Modifiers;
+        var capturedKey = hotkey.Key;
+        void ApplyCapturedKey(uint key, uint modifiers)
+        {
+            if (IsModifierKey(key))
+            {
+                gesture.Text = ModifierText(modifiers);
+                return;
+            }
+
+            capturedModifiers = modifiers;
+            capturedKey = key;
+            var duplicate = hotkeys.Any(entry =>
+                entry.Id != hotkey.Id && entry.Enabled &&
+                entry.Modifiers == capturedModifiers && entry.Key == capturedKey);
+            var preview = CloneHotkey(hotkey);
+            preview.Modifiers = capturedModifiers;
+            preview.Key = capturedKey;
+            gesture.Text = preview.GestureText;
+            error.Text = duplicate
+                ? string.Format(T("shortcuts.registrationFailed"), 1, preview.GestureText)
+                : "";
+            dialog.IsPrimaryButtonEnabled = !duplicate;
+        }
+
+        uint pressedModifiers = 0;
+        LowLevelKeyboardProc hookCallback = (code, wParam, lParam) =>
+        {
+            const int keyDown = 0x0100;
+            const int keyUp = 0x0101;
+            const int sysKeyDown = 0x0104;
+            const int sysKeyUp = 0x0105;
+            var message = wParam.ToInt32();
+            if (code >= 0 && message is keyDown or sysKeyDown)
+            {
+                var key = unchecked((uint)Marshal.ReadInt32(lParam));
+                var modifier = ModifierFlag(key);
+                if (modifier != 0)
+                {
+                    pressedModifiers |= modifier;
+                }
+                var modifiers = pressedModifiers;
+                DispatcherQueue.TryEnqueue(() => ApplyCapturedKey(key, modifiers));
+                return new IntPtr(1);
+            }
+
+            if (code >= 0 && message is keyUp or sysKeyUp)
+            {
+                var key = unchecked((uint)Marshal.ReadInt32(lParam));
+                pressedModifiers &= ~ModifierFlag(key);
+                return new IntPtr(1);
+            }
+
+            return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+        };
+        var hook = SetWindowsHookEx(13, hookCallback, GetModuleHandle(null), 0);
+        if (hook == IntPtr.Zero)
+        {
+            throw new InvalidOperationException($"Keyboard capture could not start ({Marshal.GetLastWin32Error()}).");
+        }
+
+        ContentDialogResult result;
+        try
+        {
+            result = await dialog.ShowAsync();
+        }
+        finally
+        {
+            UnhookWindowsHookEx(hook);
+            GC.KeepAlive(hookCallback);
+        }
+
+        if (result != ContentDialogResult.Primary)
+        {
+            return false;
+        }
+
+        hotkey.Modifiers = capturedModifiers;
+        hotkey.Key = capturedKey;
+        hotkey.Enabled = true;
+        return true;
+    }
+
+    private static uint CurrentModifiers()
+    {
+        var keys = System.Windows.Forms.Control.ModifierKeys;
+        uint modifiers = 0;
+        if ((keys & System.Windows.Forms.Keys.Alt) != 0) modifiers |= 0x0001;
+        if ((keys & System.Windows.Forms.Keys.Control) != 0) modifiers |= 0x0002;
+        if ((keys & System.Windows.Forms.Keys.Shift) != 0) modifiers |= 0x0004;
+        if (GetAsyncKeyState(0x5B) < 0 || GetAsyncKeyState(0x5C) < 0) modifiers |= 0x0008;
+        return modifiers;
+    }
+
+    private static bool IsModifierKey(uint key) => key is
+        0x10 or 0x11 or 0x12 or 0x5B or 0x5C or
+        0xA0 or 0xA1 or 0xA2 or 0xA3 or 0xA4 or 0xA5;
+
+    private static uint ModifierFlag(uint key) => key switch
+    {
+        0x12 or 0xA4 or 0xA5 => 0x0001,
+        0x11 or 0xA2 or 0xA3 => 0x0002,
+        0x10 or 0xA0 or 0xA1 => 0x0004,
+        0x5B or 0x5C => 0x0008,
+        _ => 0
+    };
+
+    private static string ModifierText(uint modifiers)
+    {
+        var preview = new HotkeyDefinition { Modifiers = modifiers, Key = 0 };
+        return preview.GestureText.Replace(" + VK 0x00", "", StringComparison.Ordinal);
     }
 
     private void ShowSettingsPage()
@@ -648,7 +1044,8 @@ public sealed class MainWindow : Window
             T("settings.startWithWindows"),
             T("settings.startWithWindowsDescription"),
             AppServices.Settings.Current.StartWithWindows,
-            SetStartWithWindowsAsync));
+            SetStartWithWindowsAsync,
+            StartupRegistration.GetEnabledAsync));
     }
 
     private UIElement SettingsOptionCard(
@@ -675,6 +1072,7 @@ public sealed class MainWindow : Window
             MinWidth = 220
         };
         AddFallbackWinUiResources(comboBox.Resources);
+        SetAutomation(comboBox, $"Settings.Option.{++_automationSequence}", title);
         comboBox.SelectionChanged += (_, _) =>
         {
             if (comboBox.SelectedItem is SelectOption option &&
@@ -695,7 +1093,8 @@ public sealed class MainWindow : Window
         string title,
         string description,
         bool isOn,
-        Func<bool, Task<bool>> changed)
+        Func<bool, Task<bool>> changed,
+        Func<Task<bool?>>? getActualState = null)
     {
         var grid = new Grid { ColumnSpacing = 20 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -715,8 +1114,10 @@ public sealed class MainWindow : Window
             OffContent = T("common.off")
         };
         AddFallbackWinUiResources(toggle.Resources);
+        SetAutomation(toggle, $"Settings.Toggle.{++_automationSequence}", title);
 
         var suppressChange = false;
+        var changeVersion = 0;
         toggle.Toggled += async (_, _) =>
         {
             if (suppressChange)
@@ -725,6 +1126,7 @@ public sealed class MainWindow : Window
             }
 
             var requested = toggle.IsOn;
+            changeVersion++;
             toggle.IsEnabled = false;
             try
             {
@@ -749,7 +1151,39 @@ public sealed class MainWindow : Window
         Grid.SetColumn(toggle, 1);
         grid.Children.Add(text);
         grid.Children.Add(toggle);
+        if (getActualState is not null)
+        {
+            _ = SyncActualStateAsync();
+        }
+
         return Card(grid);
+
+        async Task SyncActualStateAsync()
+        {
+            try
+            {
+                var version = changeVersion;
+                var actual = await getActualState();
+                if (actual is null || version != changeVersion)
+                {
+                    return;
+                }
+
+                suppressChange = true;
+                toggle.IsOn = actual.Value;
+                suppressChange = false;
+                if (AppServices.Settings.Current.StartWithWindows != actual.Value)
+                {
+                    AppServices.Settings.Current.StartWithWindows = actual.Value;
+                    AppServices.Settings.Save();
+                }
+            }
+            catch (Exception ex)
+            {
+                suppressChange = false;
+                SetStatus(ex.Message);
+            }
+        }
     }
 
     private async Task<bool> SetStartWithWindowsAsync(bool enabled)
@@ -830,6 +1264,7 @@ public sealed class MainWindow : Window
             HorizontalAlignment = HorizontalAlignment.Left,
             Content = bannerImage
         };
+        SetAutomation(donationButton, "Donation.Open", T("donation.openBuyMeACoffee"));
         bannerImage.ImageFailed += (_, _) => donationButton.Content = fallbackText;
         donationButton.Click += (_, _) => _ = Windows.System.Launcher.LaunchUriAsync(new Uri(DonationUrl));
         ToolTipService.SetToolTip(donationButton, DonationUrl);
@@ -842,6 +1277,7 @@ public sealed class MainWindow : Window
             Padding = new Thickness(0),
             HorizontalAlignment = HorizontalAlignment.Left
         };
+        SetAutomation(link, "Donation.Link", T("donation.openBuyMeACoffee"));
         ToolTipService.SetToolTip(link, DonationUrl);
         var urlText = TextBlock(DonationUrl, 12, SecondaryTextBrush);
 
@@ -941,6 +1377,7 @@ public sealed class MainWindow : Window
             Padding = new Thickness(0),
             MinHeight = 0
         };
+        SetAutomation(link, $"About.Link.{row}", uri);
         Grid.SetRow(labelBlock, row);
         Grid.SetColumn(labelBlock, 0);
         Grid.SetRow(link, row);
@@ -981,15 +1418,22 @@ public sealed class MainWindow : Window
 
     private StackPanel ActionRow(params (string Label, Action Action)[] actions)
     {
+        var compact = CurrentLayoutMode() != 0;
         var row = new StackPanel
         {
-            Orientation = Orientation.Horizontal,
+            Orientation = compact ? Orientation.Vertical : Orientation.Horizontal,
             Spacing = 8,
-            Margin = new Thickness(0, 8, 0, 0)
+            Margin = new Thickness(0, 8, 0, 0),
+            HorizontalAlignment = compact ? HorizontalAlignment.Stretch : HorizontalAlignment.Left
         };
         foreach (var action in actions)
         {
-            row.Children.Add(ActionButton(action.Label, action.Action));
+            var button = ActionButton(action.Label, action.Action);
+            if (compact)
+            {
+                button.HorizontalAlignment = HorizontalAlignment.Stretch;
+            }
+            row.Children.Add(button);
         }
 
         return row;
@@ -1004,6 +1448,7 @@ public sealed class MainWindow : Window
             MinWidth = 84
         };
         AddFallbackWinUiResources(button.Resources);
+        SetAutomation(button, $"{_currentPageTag}.Action.{++_automationSequence}", text);
         button.Click += (_, _) => action();
         return button;
     }
@@ -1055,6 +1500,7 @@ public sealed class MainWindow : Window
     private void SetStatus(string message)
     {
         _status.Text = message;
+        AutomationProperties.SetName(_status, string.IsNullOrWhiteSpace(message) ? "Status" : message);
         _status.Margin = string.IsNullOrWhiteSpace(message)
             ? new Thickness(0)
             : new Thickness(0, 0, 0, 14);
@@ -1065,6 +1511,24 @@ public sealed class MainWindow : Window
         var values = Enum.GetValues<HotkeyActionType>();
         var index = Array.IndexOf(values, current);
         return values[(index + 1) % values.Length];
+    }
+
+    private static HotkeyDefinition CloneHotkey(HotkeyDefinition hotkey) => new()
+    {
+        Id = hotkey.Id,
+        Name = hotkey.Name,
+        Action = hotkey.Action,
+        DeviceId = hotkey.DeviceId,
+        Modifiers = hotkey.Modifiers,
+        Key = hotkey.Key,
+        VolumeStep = hotkey.VolumeStep,
+        Enabled = hotkey.Enabled
+    };
+
+    private static void SetAutomation(FrameworkElement element, string id, string name)
+    {
+        AutomationProperties.SetAutomationId(element, id);
+        AutomationProperties.SetName(element, name);
     }
 
     private static uint NextKey(uint current)
@@ -1141,7 +1605,10 @@ public sealed class MainWindow : Window
     {
         var windowId = Win32Interop.GetWindowIdFromWindow(Hwnd);
         var appWindow = AppWindow.GetFromWindowId(windowId);
-        appWindow.Resize(new Windows.Graphics.SizeInt32(1040, 720));
+        var scale = Math.Max(1.0, GetDpiForWindow(Hwnd) / 96.0);
+        appWindow.Resize(new Windows.Graphics.SizeInt32(
+            (int)Math.Round(1040 * scale),
+            (int)Math.Round(720 * scale)));
         appWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "App.ico"));
         appWindow.Closing += (_, args) =>
         {
@@ -1170,6 +1637,17 @@ public sealed class MainWindow : Window
 
         var titleBar = appWindow.TitleBar;
         titleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+        if (new AccessibilitySettings().HighContrast)
+        {
+            titleBar.ButtonBackgroundColor = null;
+            titleBar.ButtonInactiveBackgroundColor = null;
+            titleBar.ButtonForegroundColor = null;
+            titleBar.ButtonInactiveForegroundColor = null;
+            titleBar.ButtonHoverBackgroundColor = null;
+            titleBar.ButtonPressedBackgroundColor = null;
+            return;
+        }
+
         titleBar.ButtonBackgroundColor = Colors.Transparent;
         titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
         titleBar.ButtonForegroundColor = IsLightPalette() ? Color.FromArgb(255, 32, 32, 32) : Colors.White;

@@ -4,6 +4,7 @@ namespace SpeakerHop.Services;
 
 public sealed class AudioCommandService
 {
+    private static readonly TimeSpan LastSeenWriteInterval = TimeSpan.FromHours(1);
     private readonly IAudioDeviceService _audio;
     private readonly ISettingsService _settings;
     private readonly TimeProvider _timeProvider;
@@ -22,7 +23,6 @@ public sealed class AudioCommandService
         try
         {
             var devices = _audio.GetRenderDevices();
-            ReconcileSelectedDeviceIds(devices);
             var cycleIds = _settings.Current.CycleDeviceIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
             var now = _timeProvider.GetUtcNow();
             foreach (var device in devices)
@@ -32,12 +32,8 @@ public sealed class AudioCommandService
 
             RememberConnectedDevices(devices, now);
             var activeIds = devices.Select(device => device.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var activeNames = devices
-                .Select(device => NormalizeDeviceName(device.Name))
-                .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var rememberedSelectedDevices = _settings.Current.RememberedAudioDevices
                 .Where(device => cycleIds.Contains(device.Id) && !activeIds.Contains(device.Id))
-                .Where(device => !activeNames.Contains(NormalizeDeviceName(device.Name)))
                 .OrderByDescending(device => device.LastSeen)
                 .Select(device => new AudioDeviceInfo
                 {
@@ -61,7 +57,20 @@ public sealed class AudioCommandService
     {
         try
         {
-            var devices = GetDevices().Where(d => d.IncludeInCycle && d.IsConnected).ToList();
+            var activeDevices = _audio.GetRenderDevices();
+            var activeById = activeDevices
+                .GroupBy(device => device.Id, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            var devices = new List<AudioDeviceInfo>();
+            foreach (var id in _settings.Current.CycleDeviceIds)
+            {
+                if (activeById.TryGetValue(id, out var device) &&
+                    !devices.Any(existing => string.Equals(existing.Id, device.Id, StringComparison.OrdinalIgnoreCase)))
+                {
+                    devices.Add(device);
+                }
+            }
+
             if (devices.Count == 0)
             {
                 Notify(T("audio.noCycleDevices"));
@@ -146,57 +155,6 @@ public sealed class AudioCommandService
         }
     }
 
-    private void ReconcileSelectedDeviceIds(IReadOnlyList<AudioDeviceInfo> activeDevices)
-    {
-        if (_settings.Current.CycleDeviceIds.Count == 0 || activeDevices.Count == 0)
-        {
-            return;
-        }
-
-        var activeIds = activeDevices
-            .Select(device => device.Id)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var activeDevicesByName = activeDevices
-            .GroupBy(device => NormalizeDeviceName(device.Name), StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.ToList(), StringComparer.OrdinalIgnoreCase);
-        var rememberedById = _settings.Current.RememberedAudioDevices
-            .GroupBy(device => device.Id, StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-
-        var changed = false;
-        var nextIds = new List<string>();
-        foreach (var id in _settings.Current.CycleDeviceIds)
-        {
-            if (activeIds.Contains(id))
-            {
-                AddDistinct(nextIds, id);
-                continue;
-            }
-
-            if (rememberedById.TryGetValue(id, out var remembered) &&
-                activeDevicesByName.TryGetValue(NormalizeDeviceName(remembered.Name), out var matchingActiveDevices))
-            {
-                changed = true;
-                if (matchingActiveDevices.Count == 1)
-                {
-                    AddDistinct(nextIds, matchingActiveDevices[0].Id);
-                }
-
-                continue;
-            }
-
-            AddDistinct(nextIds, id);
-        }
-
-        if (!changed && nextIds.SequenceEqual(_settings.Current.CycleDeviceIds, StringComparer.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        _settings.Current.CycleDeviceIds = nextIds;
-        _settings.Save();
-    }
-
     private void Notify(string message, bool isDeviceSwitch = false)
     {
         StatusChanged?.Invoke(this, new AudioCommandNotification(message, isDeviceSwitch));
@@ -213,7 +171,7 @@ public sealed class AudioCommandService
             if (remembered.TryGetValue(device.Id, out var existing))
             {
                 if (!string.Equals(existing.Name, device.Name, StringComparison.Ordinal) ||
-                    existing.LastSeen != lastSeen)
+                    lastSeen - existing.LastSeen >= LastSeenWriteInterval)
                 {
                     existing.Name = device.Name;
                     existing.LastSeen = lastSeen;
@@ -234,7 +192,19 @@ public sealed class AudioCommandService
 
         if (changed)
         {
+            TrySaveSettings();
+        }
+    }
+
+    private void TrySaveSettings()
+    {
+        try
+        {
             _settings.Save();
+        }
+        catch
+        {
+            // Audio enumeration and switching must remain usable when settings persistence fails.
         }
     }
 
@@ -243,18 +213,6 @@ public sealed class AudioCommandService
         return LocalizationService.Text(key, _settings.Current.Language);
     }
 
-    private static void AddDistinct(List<string> ids, string id)
-    {
-        if (!ids.Any(existing => string.Equals(existing, id, StringComparison.OrdinalIgnoreCase)))
-        {
-            ids.Add(id);
-        }
-    }
-
-    private static string NormalizeDeviceName(string name)
-    {
-        return name.Trim();
-    }
 }
 
 public sealed record AudioCommandNotification(string Message, bool IsDeviceSwitch);

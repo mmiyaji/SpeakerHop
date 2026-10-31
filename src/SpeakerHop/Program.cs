@@ -4,7 +4,7 @@ namespace SpeakerHop;
 
 public static class Program
 {
-    private const string SingleInstanceMutexName = @"Local\SpeakerHop.SingleInstance";
+    private const string SingleInstanceMutexName = @"Local\SpeakerHop.SingleInstance.v2";
     private static App? _app;
     private static Mutex? _singleInstanceMutex;
     private static bool _ownsSingleInstanceMutex;
@@ -14,6 +14,9 @@ public static class Program
     {
         try
         {
+            AppDomain.CurrentDomain.UnhandledException += (_, e) => WriteCrashLog(e.ExceptionObject);
+            WinRT.ComWrappersSupport.InitializeComWrappers();
+
             _singleInstanceMutex = new Mutex(initiallyOwned: true, SingleInstanceMutexName, out var ownsMutex);
             if (!ownsMutex)
             {
@@ -21,8 +24,7 @@ public static class Program
             }
 
             _ownsSingleInstanceMutex = true;
-            AppDomain.CurrentDomain.UnhandledException += (_, e) => WriteCrashLog(e.ExceptionObject);
-            WinRT.ComWrappersSupport.InitializeComWrappers();
+
             Microsoft.UI.Xaml.Application.Start(_ =>
             {
                 _app = new App();

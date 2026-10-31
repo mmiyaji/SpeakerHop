@@ -18,19 +18,39 @@ The README image uses an actual light-theme English SpeakerHop screenshot embedd
 
 ## Build
 
-Use Visual Studio Build Tools MSBuild. `dotnet build` may fail on machines where the .NET SDK cannot find Appx/Pri packaging tasks.
+Use Visual Studio Build Tools MSBuild. `dotnet build` may fail on machines where the .NET SDK cannot find Appx/Pri packaging tasks. The app targets .NET 8 and publishes self-contained, so the target PC does not need a separately installed .NET runtime.
 
 ```powershell
 & 'C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe' src\SpeakerHop\SpeakerHop.csproj /restore /p:Configuration=Release /p:Platform=x64 /m
 ```
 
-## Create unsigned MSIX
+## Create unsigned, self-contained MSIX
 
 ```powershell
 .\build-package.ps1 -Version 1.0.0.0 -Publisher 'CN=Your Partner Center Publisher'
 ```
 
-The unsigned package is written to `artifacts\SpeakerHop_<version>_x64.msix`. For Store submission, replace the package identity and publisher with the Partner Center reserved values, add final brand assets/screenshots, sign or let Partner Center sign as appropriate, and run Windows App Certification Kit.
+The script runs a clean self-contained .NET publish into `artifacts\publish-<version>`, validates that the .NET runtime and requested app version are present, copies only that publish output into a clean package layout, and excludes PDB files. Windows App Runtime 1.7 is a package dependency. `src\SpeakerHop\Package.appxmanifest` is the manifest template; package identity, version, architecture, publisher, and executable entry point are safely replaced for the requested package.
+
+The unsigned package is written to `artifacts\SpeakerHop_<version>_x64.msix`. For Store submission, pass the Partner Center reserved identity and publisher values, add final brand assets/screenshots, sign or let Partner Center sign as appropriate, and run Windows App Certification Kit.
+
+## Local release installation
+
+GitHub releases include a development ZIP and an unsigned MSIX for signing or Store submission. The unsigned MSIX is not a directly installable, trusted production installer.
+
+For the development ZIP, enable Windows Developer Mode and install Windows App Runtime 1.7 (x64). Extract the ZIP and run:
+
+```powershell
+.\install-local.ps1
+```
+
+The installer copies the package to a stable folder under LocalAppData, registers it without removing settings, and launches it. If package registration is unavailable under your user profile, choose a writable local folder outside the checkout:
+
+```powershell
+.\install-local.ps1 -InstallDirectory D:\Apps\SpeakerHop\1.0.26.0
+```
+
+Do not move or delete the installed folder. The app shows its main window on the first launch; subsequent launches respect **Show main window on startup**. When that setting is off, open settings from the tray icon's context menu.
 
 ## Store review note
 
