@@ -1,5 +1,6 @@
-﻿using SpeakerHop.Models;
+using SpeakerHop.Models;
 using SpeakerHop.Services;
+using SpeakerHop.Controls;
 using System.Reflection;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
@@ -34,6 +35,8 @@ public sealed partial class MainWindow
         RestoreStartupHotkeyStatus();
         var saveButton = InlineButton(T("shortcuts.save"), SaveHotkeys, "Shortcuts.Save", T("shortcuts.save"));
         var discardButton = InlineButton(T("shortcuts.discard"), DiscardHotkeys, "Shortcuts.Discard", T("shortcuts.discard"));
+        ActionButtonStyles.ApplyPrimary(saveButton);
+        ActionButtonStyles.ApplyCritical(discardButton);
         _saveHotkeysButton = saveButton;
         _discardHotkeysButton = discardButton;
         UpdateDraftActions();
@@ -178,6 +181,7 @@ public sealed partial class MainWindow
             else { hotkey.Key = 0; hotkey.Modifiers = 0; hotkey.Enabled = false; }
             MarkHotkeysDirty(); ShowShortcutsPage();
         }, $"Shortcuts.Clear.{hotkey.Id}", T("shortcuts.clear"));
+        ActionButtonStyles.ApplyCritical(remove);
         remove.IsEnabled = hotkey.Key != 0 || actionRows.Count > 1;
         actions.Children.Add(remove);
         Grid.SetColumn(enabled, 0); Grid.SetColumn(actionLabel, 1);
@@ -392,6 +396,7 @@ public sealed partial class MainWindow
         ContentDialogResult result;
         try
         {
+            ActionButtonStyles.ApplyDialog(dialog);
             result = await dialog.ShowAsync();
         }
         catch (Exception ex)

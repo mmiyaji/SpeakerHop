@@ -1,5 +1,6 @@
 using SpeakerHop.Models;
 using SpeakerHop.Services;
+using SpeakerHop.Controls;
 using System.Reflection;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;

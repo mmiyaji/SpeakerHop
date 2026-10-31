@@ -1,0 +1,31 @@
+SpeakerHop — プライバシーポリシー / Privacy policy
+適用日 / Effective: 2026-11-01
+
+1. 運営者と対象
+開発者: mmiyaji。本ポリシーはSpeakerHop本体の動作に関する説明です。Windows、配布サービス、外部リンク先にはそれぞれのポリシーも適用されます。
+
+2. このPCで扱う情報
+アプリは、接続された音声デバイスの名前・識別子、既定出力、音量・ミュート状態を音声操作のために扱います。設定ファイルには、ショートカットの組み合わせと操作、デバイスの名前・識別子・最終確認日時、循環対象、言語・テーマ・通知・起動設定を保存します。
+設定したキーの組み合わせを検出します。キー割り当てダイアログでは、アプリが前面にある間にキーを取得します。通常の入力内容や入力履歴を記録・送信する機能はありません。マイク操作はミュート状態の変更であり、音声を録音・保存・送信する機能はありません。
+
+3. 保存場所・保持・削除
+設定はユーザープロファイル内のSpeakerHop/settings.jsonに保存します。パッケージ版ではWindowsによりパッケージのLocalCache領域へリダイレクトされる場合があります。「情報」の保存先表示も確認してください。
+起動エラー等が発生すると、同じユーザー領域のSpeakerHop/crash.logに日時、例外メッセージ、スタックトレースを保存する場合があります。ログにはファイルパスやユーザー名が含まれる場合があります。壊れた設定を検出した場合、元の設定を.invalidファイルとしてバックアップします。
+アプリはこれらを自動送信しません。設定・ログは、ご自身で削除するかOSが削除するまで残ります。削除する場合はアプリを完全終了してから設定、ログ、バックアップを削除してください。設定の削除で初期状態に戻ります。アンインストール時の保持・削除はWindowsおよびインストール方式にも依存します。
+
+4. 外部通信
+アプリ独自のアカウント、広告、アクセス解析、テレメトリー、自動クラッシュ送信の機能はありません。
+寄付タブを開くと、Buy Me a CoffeeのCDN（cdn.buymeacoffee.com）からボタン画像を取得します。このリクエストでは接続先にIPアドレス等の通常の通信情報が伝わります。設定ファイルや音声データをそのリクエストに添付しません。
+Webサイト、ソースコード、リリース、サポート、寄付のリンクを開くと既定のブラウザーで外部サイトへ移動し、そのサイトのポリシーが適用されます。Windowsや配布元が行う通信は本アプリ独自の通信とは別です。
+
+5. 共有と問い合わせ
+開発者に設定やログを送る仕組みはありません。問い合わせ時にご自身で共有する場合は、公開前に個人情報を除いてください。
+連絡先: https://github.com/mmiyaji/SpeakerHop/issues（公開）
+本ポリシーの改訂は、改訂日を付した文書をアプリに同梱してお知らせします。
+
+English
+Operator: mmiyaji. This policy describes SpeakerHop; Windows, distribution services and external sites have separate policies.
+Local data: SpeakerHop uses device names/IDs, the default output, volume and mute state to control audio. It stores shortcut bindings/actions, device names/IDs/last-seen times, cycle selections and language/theme/notification/startup preferences locally. It detects configured shortcuts and captures a proposed binding while its capture dialog is in the foreground. It does not record or transmit typing history, or record, save or transmit audio.
+Storage: Settings are in the user profile's SpeakerHop/settings.json, potentially redirected to a package LocalCache folder by Windows. The Information tab displays the resolved settings path. Startup errors may create SpeakerHop/crash.log with timestamps, exception details and stack traces, potentially including paths/usernames. Invalid settings may be preserved in .invalid backups. These files are not automatically uploaded and remain until you or the OS delete them. Exit the app before deleting settings/logs/backups; deleting settings resets preferences. Uninstall retention depends on Windows and the installation method.
+Network: There are no app accounts, ads, analytics, telemetry or automatic crash reporting. Opening the Donation tab fetches a button image from cdn.buymeacoffee.com, exposing normal connection information such as your IP address to that provider, without attaching settings or audio. External links open your browser and are subject to the destination's policies. Windows/distribution-service networking is separate.
+Contact/sharing: The app has no built-in log or settings upload. Remove private information before voluntarily sharing any files at https://github.com/mmiyaji/SpeakerHop/issues (public). Revisions are dated and bundled with the app.

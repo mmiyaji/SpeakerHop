@@ -6,6 +6,12 @@
         <ResourceDictionary>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalBackground" Color="#0CA4262C" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalForeground" Color="#9B3038" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalBorder" Color="#409B3038" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelForeground" Color="#1A1A1A" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelBorder" Color="#66000000" />
                     <SolidColorBrush x:Key="SpeakerHop.PageBackgroundBrush" Color="#F3F3F3" />
                     <SolidColorBrush x:Key="SpeakerHop.PanelBackgroundBrush" Color="#FFFFFF" />
                     <SolidColorBrush x:Key="SpeakerHop.StrokeBrush" Color="#DADADA" />
@@ -13,6 +19,12 @@
                     <SolidColorBrush x:Key="SpeakerHop.SecondaryTextBrush" Color="#5C5C5C" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalBackground" Color="#14FFB4B8" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalForeground" Color="#FFB4B8" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalBorder" Color="#48FFB4B8" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelForeground" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelBorder" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="SpeakerHop.PageBackgroundBrush" Color="#0F0F0F" />
                     <SolidColorBrush x:Key="SpeakerHop.PanelBackgroundBrush" Color="#1F1F1F" />
                     <SolidColorBrush x:Key="SpeakerHop.StrokeBrush" Color="#3E3E3E" />
@@ -20,6 +32,12 @@
                     <SolidColorBrush x:Key="SpeakerHop.SecondaryTextBrush" Color="#BEBEBE" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalBackground" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalForeground" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CriticalBorder" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelBackground" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelForeground" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.Action.CancelBorder" Color="{ThemeResource SystemColorWindowTextColor}" />
                     <SolidColorBrush x:Key="SpeakerHop.PageBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="SpeakerHop.PanelBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
                     <SolidColorBrush x:Key="SpeakerHop.StrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
@@ -27,6 +45,18 @@
                     <SolidColorBrush x:Key="SpeakerHop.SecondaryTextBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+            <Style x:Key="SpeakerHop.CriticalActionStyle" TargetType="Button">
+                <Setter Property="Background" Value="{ThemeResource SpeakerHop.Action.CriticalBackground}" />
+                <Setter Property="Foreground" Value="{ThemeResource SpeakerHop.Action.CriticalForeground}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource SpeakerHop.Action.CriticalBorder}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+            <Style x:Key="SpeakerHop.CancelActionStyle" TargetType="Button">
+                <Setter Property="Background" Value="{ThemeResource SpeakerHop.Action.CancelBackground}" />
+                <Setter Property="Foreground" Value="{ThemeResource SpeakerHop.Action.CancelForeground}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource SpeakerHop.Action.CancelBorder}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
             <Style x:Key="SpeakerHop.SettingsTitleTextBlockStyle" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14" />
                 <Setter Property="FontWeight" Value="SemiBold" />

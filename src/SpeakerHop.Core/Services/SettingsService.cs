@@ -25,6 +25,8 @@ public sealed class SettingsService
         _settingsPath = Path.GetFullPath(settingsPath);
     }
 
+    public string SettingsPath => _settingsPath;
+
     public AppSettings Current { get; private set; } = new();
 
     /// <summary>True when a read/backup failure means the existing settings file must be preserved.</summary>

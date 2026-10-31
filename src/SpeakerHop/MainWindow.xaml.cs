@@ -107,9 +107,15 @@ public sealed partial class MainWindow : Window
         Title = "SpeakerHop";
         BuildShell();
         ConfigureWindow();
+        _currentOutputTimer.Tick += (_, _) => RefreshCurrentOutput();
         Activated += (_, args) =>
         {
-            if (args.WindowActivationState != WindowActivationState.Deactivated) RefreshAppearance();
+            if (args.WindowActivationState != WindowActivationState.Deactivated)
+            {
+                RefreshAppearance();
+                _currentOutputTimer.Start();
+            }
+            else _currentOutputTimer.Stop();
             if (args.WindowActivationState == WindowActivationState.Deactivated && _captureDialog is not null)
             {
                 _captureCancelled = true;
@@ -456,12 +462,25 @@ public sealed partial class MainWindow : Window
     public async Task RequestExitAsync()
     {
         if (_exitDialogOpen) return;
-        if (!_hasUnsavedHotkeyChanges) { AppServices.ExitApplication(); return; }
+
         _exitDialogOpen = true;
         try
         {
             Activate();
             AppServices.Windowing.BringToFront();
+            if (!_hasUnsavedHotkeyChanges)
+            {
+                var confirmation = new ContentDialog
+                {
+                    XamlRoot = _root.XamlRoot, RequestedTheme = _root.RequestedTheme,
+                    Title = T("about.exitConfirm"), Content = T("about.exitApplicationDescription"),
+                    PrimaryButtonText = T("about.exitApplication"), CloseButtonText = T("common.cancel"),
+                    DefaultButton = ContentDialogButton.Close
+                };
+                Controls.ActionButtonStyles.ApplyDialog(confirmation, criticalPrimary: true);
+                if (await confirmation.ShowAsync() == ContentDialogResult.Primary) AppServices.ExitApplication();
+                return;
+            }
             var dialog = new ContentDialog
             {
                 XamlRoot = _root.XamlRoot, RequestedTheme = _root.RequestedTheme,
@@ -469,6 +488,7 @@ public sealed partial class MainWindow : Window
                 SecondaryButtonText = T("shortcuts.discard"), CloseButtonText = T("common.cancel"),
                 DefaultButton = ContentDialogButton.Close
             };
+            Controls.ActionButtonStyles.ApplyDialog(dialog, criticalSecondary: true);
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary)
             {

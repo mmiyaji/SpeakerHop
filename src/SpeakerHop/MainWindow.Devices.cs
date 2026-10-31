@@ -22,6 +22,24 @@ namespace SpeakerHop;
 
 public sealed partial class MainWindow
 {
+    private readonly DispatcherTimer _currentOutputTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+
+    private void RefreshCurrentOutput()
+    {
+        if (_currentPageTag != DevicesTag || AppServices.IsExiting) return;
+        try
+        {
+            var current = AppServices.Audio.GetRenderDevices().FirstOrDefault(device => device.IsDefault);
+            var shown = _devices.FirstOrDefault(device => device.IsConnected && device.IsDefault);
+            if (current?.Id != shown?.Id || current?.Name != shown?.Name) ShowDevicesPage();
+        }
+        catch (Exception)
+        {
+            // Clear an obsolete current output if the last endpoint disappeared.
+            if (_devices.Any(device => device.IsConnected && device.IsDefault)) ShowDevicesPage();
+        }
+    }
+
     private void ShowDevicesPage()
     {
         LoadDeviceSelections();
@@ -32,6 +50,8 @@ public sealed partial class MainWindow
     {
         _content.Children.Clear();
         AddHeader(T("devices.title"), T("devices.subtitle"));
+
+        _content.Children.Add(CurrentOutputSummary());
 
         RestoreStartupHotkeyStatus();
         _content.Children.Add(NotificationOptionRow());
@@ -48,6 +68,51 @@ public sealed partial class MainWindow
                 AppServices.Commands.CycleDevice();
                 ShowDevicesPage();
             })));
+    }
+
+    private UIElement CurrentOutputSummary()
+    {
+        var currentDevice = _devices.FirstOrDefault(device => device.IsConnected && device.IsDefault);
+        var content = new StackPanel { Spacing = 4 };
+        content.Children.Add(TextBlock(T("devices.currentOutput"), 13, SecondaryTextBrush));
+        content.Children.Add(new TextBlock
+        {
+            Text = currentDevice?.Name ?? T("common.none"),
+            FontSize = 18,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Foreground = TextBrush,
+            TextWrapping = TextWrapping.Wrap
+        });
+
+        var accent = new AccessibilitySettings().HighContrast ? TextBrush : new SolidColorBrush((Color)Application.Current.Resources["SystemAccentColor"]);
+        var stripe = new Border
+        {
+            Width = 4,
+            Background = accent,
+            VerticalAlignment = VerticalAlignment.Stretch
+        };
+        var layout = new Grid { ColumnSpacing = 12, MinWidth = 0 };
+        layout.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        layout.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        Grid.SetColumn(stripe, 0);
+        Grid.SetColumn(content, 1);
+        layout.Children.Add(stripe);
+        layout.Children.Add(content);
+
+        var summary = new Border
+        {
+            Background = PanelBrush,
+            BorderBrush = accent,
+            BorderThickness = new Thickness(1),
+            Padding = new Thickness(12),
+            Child = layout
+        };
+        AutomationProperties.SetName(summary,
+            $"{T("devices.currentOutput")}: {currentDevice?.Name ?? T("common.none")}");
+        summary.CornerRadius = new CornerRadius(6);
+        summary.Margin = new Thickness(0, 0, 0, 8);
+        SetAutomation(summary, "Devices.CurrentOutput", $"{T("devices.currentOutput")}: {currentDevice?.Name ?? T("common.none")}");
+        return summary;
     }
 
     private UIElement NotificationOptionRow()
@@ -166,10 +231,15 @@ public sealed partial class MainWindow
         var defaultBadge = new TextBlock
         {
             Text = device.IsConnected
-                ? device.IsDefault ? T("common.default") : ""
+                ? device.IsDefault ? T("devices.current") : ""
                 : T("devices.disconnected"),
-            Foreground = SecondaryTextBrush,
-            Width = 104,
+            Foreground = device.IsConnected && device.IsDefault
+                ? TextBrush
+                : SecondaryTextBrush,
+            FontWeight = device.IsConnected && device.IsDefault
+                ? Microsoft.UI.Text.FontWeights.SemiBold
+                : Microsoft.UI.Text.FontWeights.Normal,
+            TextWrapping = TextWrapping.Wrap,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -248,6 +318,23 @@ public sealed partial class MainWindow
 
         checkBox.Checked += (_, _) => UpdateDeviceSelection(device.Id, true);
         checkBox.Unchecked += (_, _) => UpdateDeviceSelection(device.Id, false);
+
+        if (device.IsConnected && device.IsDefault)
+        {
+            var accent = new AccessibilitySettings().HighContrast ? TextBrush : new SolidColorBrush((Color)Application.Current.Resources["SystemAccentColor"]);
+            var stripe = new Border { Width = 4, Background = accent };
+            var highlightedRow = new Grid { ColumnSpacing = 10, MinWidth = 0 };
+            highlightedRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            highlightedRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            Grid.SetColumn(stripe, 0);
+            Grid.SetColumn(row, 1);
+            highlightedRow.Children.Add(stripe);
+            highlightedRow.Children.Add(row);
+            var highlighted = (Border)CompactRow(highlightedRow);
+            highlighted.BorderBrush = accent;
+            highlighted.BorderThickness = new Thickness(2);
+            return highlighted;
+        }
 
         return CompactRow(row);
     }

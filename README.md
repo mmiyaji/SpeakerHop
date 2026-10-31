@@ -50,7 +50,7 @@ For the development ZIP, enable Windows Developer Mode and install Windows App R
 The installer copies the package to a stable folder under LocalAppData, registers it without removing settings, and launches it. If package registration is unavailable under your user profile, choose a writable local folder outside the checkout:
 
 ```powershell
-.\install-local.ps1 -InstallDirectory D:\Apps\SpeakerHop\1.0.29.0
+.\install-local.ps1 -InstallDirectory D:\Apps\SpeakerHop\1.0.30.0
 ```
 
 Do not move or delete the installed folder. The app shows its main window on the first launch; subsequent launches respect **Show main window on startup**. When that setting is off, open settings from the tray icon's context menu.
@@ -67,3 +67,9 @@ dotnet test tests\SpeakerHop.Tests\SpeakerHop.Tests.csproj
 ## Store review note
 
 Windows does not expose a public WinRT API for setting the default render endpoint. This app uses the desktop CoreAudio endpoint APIs plus the commonly used PolicyConfig COM interface, and therefore ships as a full-trust packaged desktop app with `runFullTrust`. Keep this explicit in the Store submission notes.
+
+## Copyright, terms and privacy
+
+Copyright © 2026 mmiyaji. All rights reserved. No open-source redistribution or modification license is granted for SpeakerHop itself. Third-party components retain their own licenses.
+
+The Information tab includes offline-readable [copyright](src/SpeakerHop/Legal/Copyright.txt), [terms of use](src/SpeakerHop/Legal/Terms.txt), [privacy policy](src/SpeakerHop/Legal/Privacy.txt), and [third-party notices](src/SpeakerHop/Legal/ThirdPartyNotices.txt), along with support, releases and the settings location. The app does not record audio or automatically upload logs. Opening the Donation tab fetches an external button image; external links open the corresponding service in your browser.

@@ -1,0 +1,89 @@
+SpeakerHop third-party notices
+==============================
+
+This notice catalog covers the package and runtime components resolved for the
+Windows x64 application in src/SpeakerHop/obj/project.assets.json and the
+published self-contained .NET runtime pack version recorded there (8.0.33).
+The project targets .NET 8 for Windows, uses Windows App SDK and references NAudio 2.2.1. Versions below are the exact locally
+restored versions inspected when this file was prepared.
+
+Open-source license texts and Microsoft package notices are reproduced in the
+files under ThirdParty/ alongside this catalog. Those files were copied from
+the corresponding local NuGet package/runtime pack, preserving their text.
+
+NAudio 2.2.1
+------------
+The NAudio meta-package resolves NAudio, NAudio.Asio, NAudio.Core,
+NAudio.Midi, NAudio.Wasapi, NAudio.WinForms, and NAudio.WinMM, all version
+2.2.1. The package license file identifies Copyright 2020 Mark Heath and
+contains the MIT License. The exact license text is in
+ThirdParty/NAudio-2_2_1-MIT.txt. The NAudio modules share this package's
+license declaration; their individual nupkg folders do not provide separate
+license text files.
+
+Microsoft Windows App SDK 1.7.250606001
+---------------------------------------
+The application uses Microsoft.WindowsAppSDK 1.7.250606001 with
+Windows App Runtime 1.7 supplied as a package dependency in the release layout. The Microsoft license terms and the
+package's third-party notices are reproduced in
+ThirdParty/WindowsAppSDK-1_7_250606001-LICENSE.txt and
+ThirdParty/WindowsAppSDK-1_7_250606001-NOTICE.txt. The license is Microsoft's
+software license, not an open-source license. Its section 3 describes the
+conditions and limits applicable to distributable code. This catalog does not
+replace those terms. The separate tools/NOTICE.txt in the NuGet package covers
+build tooling and is not included because that tooling is not shipped with the
+application.
+
+WebView2 SDK 1.0.2903.40
+-----------------------
+Microsoft.WindowsAppSDK resolves Microsoft.Web.WebView2 1.0.2903.40, and the
+application output contains WebView2Loader.dll. The exact package license and
+notice files are reproduced in ThirdParty/WebView2-1_0_2903_40-LICENSE.txt and
+ThirdParty/WebView2-1_0_2903_40-NOTICE.txt. The WebView2 SDK package and the
+WebView2 browser runtime are distinct; this package resolution establishes the
+SDK loader dependency, not redistribution of the Evergreen browser runtime.
+
+.NET and Windows Desktop runtime 8.0.33
+---------------------------------------
+The project assets resolve the self-contained win-x64 Microsoft.NETCore.App
+runtime and Microsoft.WindowsDesktop.App runtime packs at 8.0.33. The .NET
+runtime MIT license and complete runtime third-party notices are reproduced
+from the local Microsoft.NETCore.App.Runtime.win-x64/8.0.33 package in
+ThirdParty/DotNet-8_0_33-LICENSE.txt and
+ThirdParty/DotNet-8_0_33-THIRD-PARTY-NOTICES.txt. The Windows Desktop runtime
+pack's MIT license is reproduced in
+ThirdParty/WindowsDesktop-8_0_33-LICENSE.txt.
+
+Windows SDK .NET projection and C#/WinRT runtime
+-------------------------------------------------
+The resolved reference package is Microsoft.Windows.SDK.NET.Ref
+10.0.19041.57. Its Microsoft.Windows.SDK.NET.dll projection is redistributed
+in the application output. The package nuspec identifies Microsoft as author
+and links its licenseUrl to https://aka.ms/WinSDKLicenseURL. The exact Windows
+SDK license text from Microsoft's official Windows SDK license page is
+included in ThirdParty/WindowsSDK-10_0_19041-LICENSE.txt. This is Microsoft's
+Windows SDK license, not MIT; its distributable-code conditions apply.
+
+The same reference package contains WinRT.Runtime.dll. The output DLL reports
+CompanyName Microsoft Corporation, ProductName C#/WinRT, assembly version
+2.2.0.0, and file/product version 2.2.0.48161+8649ee3eeb2445ca2a36d80d878ef60b96a6c65d.
+That commit hash matches the official Microsoft CsWinRT release tag
+2.2.0.241111.1. The tag's root LICENSE is reproduced in
+ThirdParty/CsWinRT-2_2_0-LICENSE.txt (MIT, Copyright (c) Microsoft Corporation).
+Sources: https://github.com/microsoft/CsWinRT/tree/2.2.0.241111.1 and
+https://learn.microsoft.com/legal/windows-sdk/license. The Microsoft.Windows.SDK.NET.dll
+license follows the Windows SDK package license metadata; it is not covered by
+the separate CsWinRT runtime MIT license.
+
+Other resolved dependencies
+---------------------------
+The assets file also lists Microsoft.Windows.SDK.BuildTools 10.0.22621.756,
+Microsoft.NETCore.Platforms 3.1.0, Microsoft.Win32.Registry 4.7.0,
+System.Security.AccessControl 4.7.0, and System.Security.Principal.Windows
+4.7.0. These are build tooling, framework/platform support, or package
+transitive dependencies. Their assemblies are not identified as redistributed
+application assets by the inspected win-x64 publish output; their notices are
+therefore not separately duplicated here. The self-contained runtime's complete
+notice file is included above for the runtime libraries it covers.
+
+

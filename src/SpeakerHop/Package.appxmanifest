@@ -6,7 +6,7 @@
   xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   IgnorableNamespaces="uap uap5 desktop rescap">
-  <Identity Name="mmiyaji.SpeakerHop" Publisher="CN=663C5D03-791A-4B2C-8509-629FA1CA125A" Version="1.0.29.0" ProcessorArchitecture="x64" />
+  <Identity Name="mmiyaji.SpeakerHop" Publisher="CN=663C5D03-791A-4B2C-8509-629FA1CA125A" Version="1.0.30.0" ProcessorArchitecture="x64" />
   <Properties>
     <DisplayName>SpeakerHop</DisplayName>
     <PublisherDisplayName>mmiyaji</PublisherDisplayName>

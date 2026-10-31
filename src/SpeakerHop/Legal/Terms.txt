@@ -1,0 +1,30 @@
+SpeakerHop — 利用規約 / Terms of use
+適用日 / Effective: 2026-11-01
+
+1. アプリの用途
+SpeakerHopは、Windowsの既定の音声出力の切り替え、音量の調整、出力および既定のマイクのミュートを操作するデスクトップアプリです。公式の配布元から取得したアプリを、ご自身が操作を認められたPCで利用してください。
+
+2. 操作の影響
+設定したグローバルショートカットは、他のアプリを使用中も動作します。音声出力の変更やミュートの解除は、会議・通話・再生中の音声にも影響することがあります。マイク操作はWindowsのMultimediaロールの既定入力を対象とし、通信用の別設定を一律に変更するものではありません。
+
+3. 提供状態
+アプリは現状のまま提供します。利用可能性、特定の機器やドライバーとの互換性、無停止・無不具合を保証しません。利用に伴う責任は適用される法令の範囲に従います。本規約は法令上除外できない権利や責任を制限するものではありません。
+
+4. 権利と第三者サービス
+アプリ本体の再配布・改変の許諾は付与しません。詳細は著作権表示を参照してください。第三者コンポーネントは個別のライセンスに従います。外部サイトと寄付サービスには各運営者の規約・ポリシーが適用されます。寄付はアプリ機能の購入やサポート保証ではありません。
+
+5. 設定と終了
+設定はこのPCに保存されます。ウィンドウを閉じるとトレイに残るため、完全に停止するには「アプリケーションを終了」を選択してください。自動起動は設定から変更できます。変更後の規約は、その内容を同梱した版で確認できます。
+
+6. 連絡先
+開発者: mmiyaji
+不具合・質問: https://github.com/mmiyaji/SpeakerHop/issues
+公開Issueには端末名、ユーザー名、ログ等の個人情報を掲載しないでください。
+
+English
+1. Purpose: SpeakerHop changes Windows' default audio output, adjusts volume and toggles output/default microphone mute. Use official distributions on a PC you are authorized to control.
+2. Effects: Configured global shortcuts work while other apps are active. Output changes or unmuting may affect calls and media. Microphone controls target the Windows Multimedia default input, not every separately configured Communications device.
+3. Availability: The app is provided as is, without guarantees of uninterrupted operation or compatibility with every device or driver. Applicable law governs liability; these terms do not limit rights or liabilities that cannot lawfully be excluded.
+4. Rights: No permission to redistribute or modify the app is granted. See Copyright. Third-party components have separate licenses. External websites and donation services have their own terms and policies. Donations do not purchase app features or guaranteed support.
+5. Settings and exit: Settings stay on this PC. Closing the window leaves the tray app running; use Exit application to stop it. Startup behavior is configurable. Revised terms are included with the version to which they apply.
+6. Contact: mmiyaji, https://github.com/mmiyaji/SpeakerHop/issues. Do not post private information in public issues.

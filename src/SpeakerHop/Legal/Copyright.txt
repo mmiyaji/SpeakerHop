@@ -1,0 +1,13 @@
+SpeakerHop — 著作権 / Copyright
+2026-11-01
+
+Copyright © 2026 mmiyaji. All rights reserved.
+
+アプリ本体のソースコード、実行ファイルおよび独自の素材の著作権は、各権利者に帰属します。本表記は、再配布、改変、派生物の作成を許諾するオープンソースライセンスではありません。別途の許諾および適用される法令に基づく権利を除き、再配布・改変の許諾は付与しません。
+GitHub等の配布サービス上の閲覧・フォーク等には、そのサービスの規約も適用されます。
+第三者のライブラリ・ランタイムには、それぞれのライセンスが適用されます。「第三者ライセンス」を参照してください。
+
+Copyright in the application's source, binaries and original assets belongs to the respective rights holders. This notice is not an open-source license and grants no permission to redistribute, modify or create derivative works, except under a separate permission or applicable law. Viewing and forking on hosting services are also subject to those services' terms. Third-party components remain governed by their own licenses; see Third-party licenses.
+
+開発者 / Developer: mmiyaji
+連絡先 / Contact: https://github.com/mmiyaji/SpeakerHop/issues
