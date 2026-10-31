@@ -43,4 +43,10 @@ WACK 10.0.26100.8249は全体PASS（24検査、必須失敗0件）。任意のAp
 
 ## 提出状況
 
-Partner Centerのログイン済みChromeからSubmission 6（`1152921505702286064`）を準備中。商品Identityは照合済み。更新後のMSIXをアップロードし、価格・公開範囲・既存の年齢区分を維持する。提出と審査・一般公開は別の状態として記録する。
+2026-11-01（日本時間）、Partner Centerのログイン済みChromeからSubmission 6（`1152921505702286064`）を提出した。ステータスは **In certification / Pre-processing**。審査通過後に自動公開する設定を確認済み。審査通過・一般公開の完了はまだ確認していない。
+
+商品Identityは照合済み。新しいMSIXはStore側でValidatedとなり、旧1.0.25.0に代わる1.1.0.0として保存された。日本語・英語の更新メッセージ、各4枚の現行スクリーンショット、外部画像取得の説明を反映。審査向けのテスト手順とWACKの任意指摘も保存した。価格・公開範囲・年齢区分は維持した。
+
+Store商品ページ: https://apps.microsoft.com/detail/9NVNC6TQJN0Q
+
+GitHubの [1.1.0](https://github.com/mmiyaji/SpeakerHop/releases/tag/v1.1.0) は公開済み。ZIP・MSIX・SHA-256ファイルについて、GitHub側のSHA-256 digestとローカルファイルの一致を確認した。公開用プライバシーポリシーもGitHub Pagesへ反映済み。

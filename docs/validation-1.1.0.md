@@ -49,4 +49,6 @@ GitHub公開状況は [1.1.0リリース](https://github.com/mmiyaji/SpeakerHop/
 - WACK再検査: 全体PASS、24検査、必須の失敗0件。任意検査2件に指摘あり。App Resourcesは、MSIXと登録先のPRIが同一で、正しい `mmiyaji.SpeakerHop` マップを持つことを確認しても `0x80073B1F` を報告した。Blocked Executablesは同梱Microsoft .NETランタイム内の文字列参照（cmd、reg、MSBuild等）を指摘した。審査向けメモにも記載し、指摘なしの合格とは表現しない。
 - 最終ビルドログ: `artifacts/release-1.1.0-final-build.log`（警告0・エラー0）。再検査レポート: `artifacts/SpeakerHop_1.1.0.0_wack-final.xml`。レポートにはローカル環境の情報が含まれるため配布ZIPには含めない。
 
-Storeのアカウント設定と提出状況は [Store提出メモ](releases/store-1.1.0.md) を参照。GitHub公開をStoreの審査通過・公開と混同しない。
+GitHub 1.1.0は公開済み。公開された全3添付ファイルのSHA-256 digestとローカルファイルが一致した。GitHub Pagesの更新済みプライバシーポリシーも確認した。
+
+StoreはSubmission 6を審査提出済み。提出状況は [Store提出メモ](releases/store-1.1.0.md) を参照。GitHub公開やStoreへの提出を、Storeの審査通過・一般公開と混同しない。
