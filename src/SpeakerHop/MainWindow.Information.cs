@@ -98,7 +98,7 @@ public sealed partial class MainWindow
     {
         var links = new StackPanel { Spacing = 2 };
         links.Children.Add(TextBlock(T("about.linksHeading"), 16, TextBrush));
-        foreach (var (key, suffix) in new[] { ("about.source", ""), ("about.releases", "/releases"), ("about.support", "/issues") })
+        foreach (var (key, suffix) in new[] { ("about.releases", "/releases"), ("about.support", "/issues") })
         {
             var link = new HyperlinkButton { Content = T(key), NavigateUri = new Uri("https://github.com/mmiyaji/SpeakerHop" + suffix), Padding = new Thickness(0, 4, 0, 4) };
             SetAutomation(link, key, T(key));
@@ -214,6 +214,15 @@ public sealed partial class MainWindow
         text.Children.Add(TextBlock(T("about.exitApplicationDescription"), 13, SecondaryTextBrush));
 
         var button = ActionButton(T("about.exitApplication"), () => _ = RequestExitAsync());
+        button.Content = new StackPanel
+        {
+            Orientation = Orientation.Horizontal, Spacing = 8,
+            Children =
+            {
+                new FontIcon { Glyph = "\uE7E8", FontSize = 14, VerticalAlignment = VerticalAlignment.Center },
+                new TextBlock { Text = T("about.exitApplication"), VerticalAlignment = VerticalAlignment.Center }
+            }
+        };
         Controls.ActionButtonStyles.ApplyCritical(button);
         SetAutomation(button, "About.Exit", T("about.exitApplication"));
         button.HorizontalAlignment = HorizontalAlignment.Right;
