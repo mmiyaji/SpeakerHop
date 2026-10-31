@@ -1,0 +1,12 @@
+Mentions relatives aux composants tiers
+
+L’application comprend des composants soumis à leurs propres conditions de licence. Les textes de licence originaux et les mentions ci-dessous sont disponibles dans le dossier ThirdParty. Ils restent dans leur langue d’origine ; cet index les présente sans les remplacer.
+
+- NAudio 2.2.1 : licence MIT.
+- Windows App SDK 1.7.250606001 : conditions de licence Microsoft.
+- WebView2 SDK 1.0.2903.40 : conditions de licence Microsoft.
+- Runtimes .NET et Windows Desktop 8.0.33 : licence MIT et mentions complètes des composants tiers.
+- Référence .NET du Windows SDK 10.0.19041.57 : conditions de licence du Microsoft Windows SDK.
+- CsWinRT 2.2.0 : licence MIT.
+
+Le catalogue original complet et la sélection par composant sont disponibles.

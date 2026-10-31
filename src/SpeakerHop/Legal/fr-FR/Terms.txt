@@ -1,0 +1,22 @@
+SpeakerHop — Conditions d’utilisation
+Date d’entrée en vigueur : 2026-11-01
+
+1. Objet de l’application
+SpeakerHop est une application de bureau qui permet de changer la sortie audio par défaut de Windows, de régler le volume et de couper ou rétablir le son de la sortie et du microphone par défaut. Utilisez l’application obtenue auprès d’une source officielle sur un PC que vous êtes autorisé à utiliser.
+
+2. Effets des commandes
+Les raccourcis globaux configurés fonctionnent également lorsque d’autres applications sont utilisées. Le changement de sortie audio ou le rétablissement du son peut affecter les réunions, appels et lectures audio en cours. Les commandes du microphone ciblent l’entrée par défaut du rôle Multimedia de Windows et ne modifient pas systématiquement un réglage Communications configuré séparément.
+
+3. Disponibilité
+L’application est fournie en l’état. Aucune garantie n’est donnée quant à sa disponibilité, sa compatibilité avec un appareil ou un pilote particulier, son fonctionnement sans interruption ou l’absence de défauts. Toute responsabilité liée à son utilisation est régie par le droit applicable. Les présentes conditions ne limitent aucun droit ni aucune responsabilité qui ne peut légalement être exclu.
+
+4. Droits et services tiers
+Aucune autorisation de redistribuer ou modifier l’application n’est accordée. Consultez la mention relative aux droits d’auteur pour plus de détails. Les composants tiers sont soumis à leurs licences respectives. Les sites externes et services de dons sont soumis aux conditions et politiques de leurs exploitants. Un don ne constitue ni l’achat de fonctionnalités de l’application ni une garantie d’assistance.
+
+5. Paramètres et fermeture
+Les paramètres sont enregistrés sur ce PC. La fermeture de la fenêtre laisse l’application dans la zone de notification ; pour l’arrêter complètement, choisissez « Quitter l’application ». Le démarrage automatique peut être modifié dans les paramètres. Toute version révisée des présentes conditions est incluse dans la version à laquelle elle s’applique.
+
+6. Contact
+Développeur : mmiyaji
+Problèmes et questions : https://github.com/mmiyaji/SpeakerHop/issues
+Ne publiez pas d’informations personnelles, telles que le nom de l’appareil, le nom d’utilisateur ou des journaux, dans les issues publiques.

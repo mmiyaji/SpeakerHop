@@ -1,0 +1,24 @@
+SpeakerHop — Política de privacidad
+Fecha de entrada en vigor: 2026-11-01
+
+1. Responsable y alcance
+Desarrollador: mmiyaji. Esta política describe el funcionamiento de SpeakerHop. Windows, los servicios de distribución y los sitios externos enlazados también se rigen por sus propias políticas.
+
+2. Información utilizada en este PC
+Para controlar el audio, la aplicación utiliza los nombres e identificadores de los dispositivos de audio conectados, la salida predeterminada y el estado del volumen y del silencio. El archivo de configuración guarda las combinaciones de atajos y sus acciones, los nombres e identificadores de los dispositivos y la fecha de su última comprobación, los dispositivos incluidos en la rotación y las preferencias de idioma, tema, notificaciones e inicio.
+La aplicación detecta las combinaciones de teclas configuradas. En el cuadro de diálogo de asignación de teclas, captura las teclas mientras la aplicación está en primer plano. No dispone de funciones para registrar o transmitir las entradas ordinarias ni su historial. Los controles del micrófono cambian el estado de silencio; no graban, guardan ni transmiten audio.
+
+3. Ubicación, conservación y eliminación
+La configuración se guarda en SpeakerHop/settings.json dentro del perfil de usuario. En la versión empaquetada, Windows puede redirigirla al área LocalCache del paquete. Consulte también la ruta que se muestra en «Información».
+Si se produce un error de inicio o similar, puede guardarse SpeakerHop/crash.log en la misma área de usuario, con la fecha y hora, el mensaje de excepción y la traza de pila. El registro puede incluir rutas de archivos y nombres de usuario. Si se detecta una configuración dañada, puede conservarse una copia de la configuración original como archivo .invalid.
+La aplicación no envía estos archivos automáticamente. La configuración y los registros permanecen hasta que usted o el sistema operativo los eliminen. Cierre completamente la aplicación antes de eliminar la configuración, los registros y las copias de seguridad. Al eliminar la configuración se restablece el estado inicial. La conservación o eliminación durante la desinstalación también depende de Windows y del método de instalación.
+
+4. Comunicaciones externas
+La aplicación no tiene cuentas propias, publicidad, análisis de uso, telemetría ni envío automático de informes de errores.
+Al abrir la pestaña de donaciones, se obtiene una imagen del botón desde cdn.buymeacoffee.com. En esa solicitud se comunican al proveedor de destino datos habituales de conexión, como la dirección IP. No se adjuntan a la solicitud el archivo de configuración ni datos de audio.
+Al abrir enlaces al sitio web, al código fuente, a las versiones, al soporte o a las donaciones, se accede a sitios externos en el navegador predeterminado, y se aplican las políticas de esos sitios. Las comunicaciones realizadas por Windows o el proveedor de distribución son independientes de las comunicaciones propias de la aplicación.
+
+5. Compartir información y consultas
+La aplicación no incluye una función para enviar la configuración o los registros al desarrollador. Si decide compartirlos al realizar una consulta, elimine la información personal antes de publicarlos.
+Contacto: https://github.com/mmiyaji/SpeakerHop/issues (público)
+Cualquier revisión de esta política se comunicará mediante un documento con fecha de revisión incluido en la aplicación.

@@ -1,0 +1,10 @@
+SpeakerHop 第三方聲明
+
+本目錄中的第三方授權原文及 Microsoft 套件聲明均維持原文，不予翻譯。原始目錄及依元件選取檔案的功能皆可使用。
+
+- NAudio 2.2.1：MIT 授權。
+- Windows App SDK 1.7.250606001：Microsoft 軟體授權條款。
+- WebView2 SDK 1.0.2903.40：Microsoft 軟體授權條款。
+- .NET 與 Windows Desktop 執行階段 8.0.33：MIT 授權，並附完整第三方聲明。
+- Windows SDK .NET Ref 10.0.19041.57：Microsoft Windows SDK 授權條款。
+- CsWinRT 2.2.0：MIT 授權。

@@ -1,0 +1,12 @@
+SpeakerHop — Third-party licenses
+
+The original third-party license texts are not translated or modified. Select License catalog and sources (original), or a component's original document, from the document list.
+
+NAudio 2.2.1 (including its modules): MIT.
+Windows App SDK 1.7.250606001: Microsoft license terms and third-party notices.
+WebView2 SDK 1.0.2903.40: Microsoft license terms and third-party notices.
+.NET / Windows Desktop 8.0.33: MIT and runtime third-party notices.
+Windows SDK .NET Ref 10.0.19041.57: Microsoft Windows SDK license terms.
+C#/WinRT 2.2.0: MIT.
+
+Each component's terms apply separately from the app's copyright notice. See the original catalog and individual documents for exact versions, sources and redistribution terms.

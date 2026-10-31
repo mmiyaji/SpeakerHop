@@ -1,0 +1,10 @@
+SpeakerHop — Derechos de autor
+2026-11-01
+
+Copyright © 2026 mmiyaji. Todos los derechos reservados.
+
+Los derechos de autor del código fuente, los archivos ejecutables y los recursos originales de la aplicación pertenecen a sus respectivos titulares. Este aviso no es una licencia de código abierto ni concede permiso para redistribuir, modificar o crear obras derivadas, salvo que exista una autorización independiente o lo permita la legislación aplicable. La consulta y la creación de bifurcaciones en servicios de alojamiento también están sujetas a las condiciones de dichos servicios.
+Las bibliotecas y los componentes de tiempo de ejecución de terceros se rigen por sus respectivas licencias. Consulte «Licencias de terceros».
+
+Desarrollador: mmiyaji
+Contacto: https://github.com/mmiyaji/SpeakerHop/issues

@@ -1,0 +1,24 @@
+SpeakerHop — Datenschutzerklärung
+Gültig ab: 2026-11-01
+
+1. Betreiber und Geltungsbereich
+Entwickler: mmiyaji. Diese Erklärung beschreibt den Betrieb von SpeakerHop selbst. Für Windows, Vertriebsdienste und verlinkte externe Websites gelten zusätzlich deren jeweilige Richtlinien.
+
+2. Auf diesem PC verarbeitete Informationen
+Für die Audiosteuerung verarbeitet die Anwendung Namen und Kennungen angeschlossener Audiogeräte, das standardmäßige Ausgabegerät sowie Lautstärke- und Stummschaltungsstatus. In der Einstellungsdatei werden Tastenkombinationen und Aktionen, Gerätenamen und -kennungen und der Zeitpunkt der letzten Überprüfung, die für den Wechsel verwendeten Geräte sowie Sprach-, Design-, Benachrichtigungs- und Starteinstellungen gespeichert.
+Die Anwendung erkennt die konfigurierten Tastenkombinationen. Im Dialog zur Tastenzuweisung erfasst sie Tasten, solange die Anwendung im Vordergrund ist. Sie verfügt über keine Funktion, die gewöhnliche Eingaben oder den Eingabeverlauf aufzeichnet oder übermittelt. Die Mikrofonsteuerung ändert den Stummschaltungsstatus; sie zeichnet keine Audiodaten auf, speichert oder übermittelt sie.
+
+3. Speicherort, Aufbewahrung und Löschung
+Die Einstellungen werden unter SpeakerHop/settings.json im Benutzerprofil gespeichert. Bei Paketversionen kann Windows den Speicherort in den LocalCache-Bereich des Pakets umleiten. Prüfen Sie auch die Anzeige des Speicherorts unter „Informationen“.
+Bei einem Startfehler oder ähnlichem kann im selben Benutzerbereich SpeakerHop/crash.log mit Zeitangaben, Ausnahmemeldung und Stacktrace gespeichert werden. Das Protokoll kann Dateipfade und Benutzernamen enthalten. Wird eine beschädigte Einstellungsdatei erkannt, wird die ursprüngliche Datei möglicherweise als .invalid-Datei gesichert.
+Die Anwendung übermittelt diese Dateien nicht automatisch. Einstellungen und Protokolle bleiben erhalten, bis Sie oder das Betriebssystem sie löschen. Beenden Sie die Anwendung vollständig, bevor Sie Einstellungen, Protokolle und Sicherungen löschen. Durch Löschen der Einstellungen wird der Ausgangszustand wiederhergestellt. Ob Daten bei der Deinstallation erhalten bleiben oder gelöscht werden, hängt auch von Windows und der Installationsart ab.
+
+4. Externe Kommunikation
+Die Anwendung verfügt über keine eigenen Konten, Werbung, Nutzungsanalyse, Telemetrie oder automatische Übermittlung von Absturzberichten.
+Beim Öffnen des Spenden-Tabs wird ein Schaltflächenbild von cdn.buymeacoffee.com abgerufen. Dabei werden dem Zielanbieter übliche Verbindungsinformationen wie die IP-Adresse mitgeteilt. Die Einstellungsdatei und Audiodaten werden dieser Anfrage nicht beigefügt.
+Wenn Sie Links zu Websites, Quellcode, Releases, Support oder Spenden öffnen, wird die externe Website im Standardbrowser aufgerufen; dort gilt deren Richtlinie. Von Windows oder dem Vertriebsanbieter ausgehende Kommunikation ist von der Kommunikation der Anwendung selbst getrennt.
+
+5. Weitergabe und Anfragen
+Es gibt keine Funktion, mit der Einstellungen oder Protokolle an den Entwickler gesendet werden. Wenn Sie diese bei einer Anfrage selbst weitergeben, entfernen Sie vor der Veröffentlichung persönliche Daten.
+Kontakt: https://github.com/mmiyaji/SpeakerHop/issues (öffentlich)
+Änderungen an dieser Erklärung werden durch ein mit Änderungsdatum versehenes und der Anwendung beigefügtes Dokument bekanntgegeben.

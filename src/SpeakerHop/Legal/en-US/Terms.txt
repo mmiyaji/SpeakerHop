@@ -1,0 +1,22 @@
+SpeakerHop — Terms of use
+Effective: 2026-11-01
+
+1. Purpose
+SpeakerHop is a desktop application for changing the Windows default audio output, adjusting volume and controlling output/default microphone mute. Obtain the app from official distribution sources and use it on a PC you are authorized to control.
+
+2. Effects of operations
+Configured global shortcuts operate while other applications are active. Changing the output or unmuting may affect meetings, calls and audio currently playing. Microphone controls target the Windows Multimedia default input; they do not uniformly change separately configured Communications devices.
+
+3. Provided as is
+The app is provided as is. Availability, compatibility with particular devices or drivers, uninterrupted operation and freedom from defects are not guaranteed. Liability arising from use is governed by applicable law. These terms do not limit rights or liabilities that cannot be excluded by law.
+
+4. Rights and third-party services
+No permission to redistribute or modify the app is granted. See the copyright notice for details. Third-party components are governed by their individual licenses. External sites and donation services have their operators' own terms and policies. Donations do not purchase app features or guaranteed support.
+
+5. Settings and exit
+Settings are stored on this PC. Closing the window leaves the app running in the tray; select Exit application to stop it completely. Automatic startup can be changed in Settings. Revised terms can be reviewed in the version with which they are bundled.
+
+6. Contact
+Developer: mmiyaji
+Issues and questions: https://github.com/mmiyaji/SpeakerHop/issues
+Do not post personal information such as device names, usernames or logs in public issues.

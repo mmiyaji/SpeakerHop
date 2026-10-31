@@ -1,0 +1,24 @@
+SpeakerHop — Politique de confidentialité
+Date d’entrée en vigueur : 2026-11-01
+
+1. Exploitant et champ d’application
+Développeur : mmiyaji. La présente politique décrit le fonctionnement de SpeakerHop lui-même. Windows, les services de distribution et les sites externes liés appliquent également leurs propres politiques.
+
+2. Informations utilisées sur ce PC
+Pour contrôler l’audio, l’application utilise les noms et identifiants des périphériques audio connectés, la sortie par défaut ainsi que l’état du volume et du mode muet. Le fichier de paramètres enregistre les combinaisons de raccourcis et leurs actions, les noms et identifiants des appareils et leur dernière date de vérification, les appareils concernés par la rotation ainsi que les préférences de langue, de thème, de notification et de démarrage.
+L’application détecte les combinaisons de touches configurées. Dans la boîte de dialogue d’affectation des touches, elle capture les touches pendant que l’application est au premier plan. Elle ne comporte aucune fonction d’enregistrement ou de transmission des saisies ordinaires ou de leur historique. Les commandes du microphone modifient l’état muet ; elles n’enregistrent, ne stockent et ne transmettent aucun son.
+
+3. Emplacement, conservation et suppression
+Les paramètres sont enregistrés dans SpeakerHop/settings.json dans le profil utilisateur. Pour la version empaquetée, Windows peut rediriger ce fichier vers l’espace LocalCache du package. Consultez également le chemin affiché dans « Informations ».
+En cas d’échec au démarrage ou d’incident similaire, SpeakerHop/crash.log peut être créé dans le même espace utilisateur, avec la date et l’heure, le message d’exception et la trace de pile. Ce journal peut contenir des chemins de fichiers et des noms d’utilisateur. Si des paramètres endommagés sont détectés, une copie des paramètres d’origine peut être conservée sous forme de fichier .invalid.
+L’application ne transmet pas automatiquement ces fichiers. Les paramètres et journaux restent présents jusqu’à leur suppression par vous ou par le système d’exploitation. Quittez complètement l’application avant de supprimer les paramètres, journaux et sauvegardes. La suppression des paramètres rétablit l’état initial. Leur conservation ou suppression lors de la désinstallation dépend également de Windows et du mode d’installation.
+
+4. Communications externes
+L’application ne comporte pas de comptes, de publicités, d’analyse d’audience, de télémétrie ni d’envoi automatique de rapports d’incident.
+À l’ouverture de l’onglet des dons, l’application récupère une image de bouton auprès de cdn.buymeacoffee.com. Des informations de connexion habituelles, telles que l’adresse IP, sont alors communiquées au fournisseur destinataire. Le fichier de paramètres et les données audio ne sont pas joints à cette requête.
+L’ouverture de liens vers le site Web, le code source, les versions, l’assistance ou les dons accède à des sites externes dans le navigateur par défaut, où leurs politiques s’appliquent. Les communications effectuées par Windows ou le fournisseur de distribution sont distinctes de celles propres à l’application.
+
+5. Partage et demandes
+Aucune fonction ne permet d’envoyer des paramètres ou journaux au développeur. Si vous choisissez de les partager lors d’une demande, supprimez les informations personnelles avant toute publication.
+Contact : https://github.com/mmiyaji/SpeakerHop/issues (public)
+Toute révision de la présente politique est signalée par un document daté inclus dans l’application.

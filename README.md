@@ -83,3 +83,5 @@ Windows does not expose a public WinRT API for setting the default render endpoi
 Copyright © 2026 mmiyaji. All rights reserved. No open-source redistribution or modification license is granted for SpeakerHop itself. Third-party components retain their own licenses.
 
 The Information tab includes offline-readable [copyright](src/SpeakerHop/Legal/Copyright.txt), [terms of use](src/SpeakerHop/Legal/Terms.txt), [privacy policy](src/SpeakerHop/Legal/Privacy.txt), and [third-party notices](src/SpeakerHop/Legal/ThirdPartyNotices.txt), along with support, releases and the settings location. The app does not record audio or automatically upload logs. Opening the Donation tab fetches an external button image; external links open the corresponding service in your browser.
+
+Legal documents follow the selected application language (Japanese, English, Simplified Chinese, Traditional Chinese, Korean, German, French, or Spanish). Third-party license originals remain unchanged and can be selected separately from the translated index.

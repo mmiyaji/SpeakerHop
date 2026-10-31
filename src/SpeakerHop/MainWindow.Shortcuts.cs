@@ -50,7 +50,7 @@ public sealed partial class MainWindow
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(68) });
-        header.Children.Add(TextBlock(T("shortcuts.enabled"), 12, SecondaryTextBrush));
+        header.Children.Add(TextBlock(T("shortcuts.enabledShort"), 12, SecondaryTextBrush));
         var actionHeading = TextBlock(T("shortcuts.actionLabel"), 12, SecondaryTextBrush);
         Grid.SetColumn(actionHeading, 1);
         header.Children.Add(actionHeading);
@@ -104,15 +104,16 @@ public sealed partial class MainWindow
             VerticalAlignment = VerticalAlignment.Center,
             TextWrapping = TextWrapping.Wrap
         };
+        var gestureText = hotkey.Key == 0 ? T("shortcuts.unassigned") : hotkey.GestureText;
         var keyButton = new Button
         {
-            Content = hotkey.Key == 0 ? T("shortcuts.unassigned") : hotkey.GestureText,
+            Content = TextBlock(gestureText, 12, TextBrush),
             MinWidth = narrow ? 98 : 118,
             MaxWidth = narrow ? 142 : 160,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Center
         };
-        SetAutomation(keyButton, $"Shortcuts.Key.{hotkey.Id}", $"{ActionName(hotkey.Action)}: {keyButton.Content}");
+        SetAutomation(keyButton, $"Shortcuts.Key.{hotkey.Id}", $"{ActionName(hotkey.Action)}: {gestureText}");
         ToolTipService.SetToolTip(keyButton, T("shortcuts.key"));
         keyButton.Click += async (_, _) =>
         {

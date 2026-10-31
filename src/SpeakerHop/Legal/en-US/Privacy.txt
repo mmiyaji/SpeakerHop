@@ -1,0 +1,24 @@
+SpeakerHop — Privacy policy
+Effective: 2026-11-01
+
+1. Operator and scope
+Developer: mmiyaji. This policy describes SpeakerHop itself. Windows, distribution services and external destinations also have their own policies.
+
+2. Information handled on this PC
+The app uses connected audio device names and identifiers, the default output, volume and mute state to perform audio operations. The settings file stores shortcut combinations and actions; device names, identifiers and last-seen times; cycle selections; and language, theme, notification and startup preferences.
+The app detects configured key combinations. In the shortcut capture dialog, keys are captured while the app is in the foreground. It has no feature that records or transmits ordinary typing content or typing history. Microphone control changes mute state; the app does not record, save or transmit audio.
+
+3. Storage, retention and deletion
+Settings are saved in SpeakerHop/settings.json in the user profile. For packaged installations, Windows may redirect storage into the package's LocalCache area. Also see the storage location displayed under Information.
+Startup and similar errors may create SpeakerHop/crash.log in the same user area, containing timestamps, exception messages and stack traces. Logs may include paths or usernames. Invalid settings may be backed up in .invalid files.
+The app does not automatically upload these files. Settings and logs remain until you or the OS delete them. Exit the app completely before deleting settings, logs and backups. Deleting settings restores initial preferences. Retention or deletion on uninstall also depends on Windows and the installation method.
+
+4. External network requests
+The app has no account, advertising, analytics, telemetry or automatic crash reporting features.
+Opening the Donation tab fetches a button image from the Buy Me a Coffee CDN (cdn.buymeacoffee.com). The provider receives normal connection information such as your IP address. Settings files and audio are not attached to that request.
+Website, source code, release, support and donation links open an external site in the default browser, where the destination's policy applies. Networking performed by Windows or distribution services is separate from this app's own requests.
+
+5. Sharing and contact
+The app has no built-in mechanism to send settings or logs to the developer. If you voluntarily share them in a support request, remove personal information before publishing.
+Contact: https://github.com/mmiyaji/SpeakerHop/issues (public)
+Policy revisions are announced by bundling a dated revised document with the app.

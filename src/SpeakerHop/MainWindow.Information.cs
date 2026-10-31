@@ -88,7 +88,7 @@ public sealed partial class MainWindow
         AddInfoRow(grid, 0, T("about.product"), "SpeakerHop");
         AddInfoRow(grid, 1, T("about.version"), AppVersion());
         AddInfoRow(grid, 2, T("about.author"), "@mmiyaji");
-        AddInfoRow(grid, 3, T("about.copyright"), "\u00A9 2026 mmiyaji. All rights reserved.");
+        AddInfoRow(grid, 3, T("about.copyright"), T("about.copyrightNotice"));
         AddInfoLinkRow(grid, 4, T("about.web"), "https://ruhenheim.org");
 
         return CompactRow(grid);
@@ -147,9 +147,10 @@ public sealed partial class MainWindow
         try
         {
             var directory = Path.Combine(AppContext.BaseDirectory, "Legal");
-            var documents = new List<LegalDocument> { new(title, Path.Combine(directory, file)) };
+            var documents = new List<LegalDocument> { new(title, LegalDocumentService.GetPath(directory, file, AppServices.Settings.Current.Language)) };
             if (file == "ThirdPartyNotices.txt")
             {
+                documents.Add(new(T("about.thirdPartyOriginal"), Path.Combine(directory, file)));
                 var notices = Path.Combine(directory, "ThirdParty");
                 if (Directory.Exists(notices))
                     documents.AddRange(Directory.GetFiles(notices, "*.txt", SearchOption.AllDirectories)
@@ -176,8 +177,16 @@ public sealed partial class MainWindow
                 selector.SelectionChanged += async (_, _) =>
                 {
                     if (selector.SelectedItem is not LegalDocument selected) return;
-                    try { text.Text = await File.ReadAllTextAsync(selected.Path); }
-                    catch (Exception ex) { text.Text = T("about.documentError") + "\n" + ex.Message; }
+                    try
+                    {
+                        var body = await File.ReadAllTextAsync(selected.Path);
+                        if (ReferenceEquals(selector.SelectedItem, selected)) text.Text = body;
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ReferenceEquals(selector.SelectedItem, selected))
+                            text.Text = T("about.documentError") + "\n" + ex.Message;
+                    }
                 };
                 panel.Children.Add(selector);
             }

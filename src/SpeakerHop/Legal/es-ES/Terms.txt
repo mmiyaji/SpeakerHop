@@ -1,0 +1,22 @@
+SpeakerHop — Condiciones de uso
+Fecha de entrada en vigor: 2026-11-01
+
+1. Finalidad de la aplicación
+SpeakerHop es una aplicación de escritorio para cambiar la salida de audio predeterminada de Windows, ajustar el volumen y silenciar o activar el sonido de la salida y del micrófono predeterminado. Utilice la aplicación obtenida de una fuente oficial en un PC que esté autorizado a manejar.
+
+2. Efectos de los controles
+Los atajos globales configurados funcionan también mientras se usan otras aplicaciones. Los cambios de salida de audio o la activación del sonido pueden afectar a reuniones, llamadas y reproducción de audio en curso. Los controles del micrófono se aplican a la entrada predeterminada del rol Multimedia de Windows y no cambian de forma general una configuración Communications independiente.
+
+3. Disponibilidad
+La aplicación se proporciona tal cual. No se garantiza su disponibilidad, compatibilidad con dispositivos o controladores concretos, funcionamiento ininterrumpido ni ausencia de errores. La responsabilidad derivada del uso se rige por la legislación aplicable. Estas condiciones no limitan los derechos ni las responsabilidades que legalmente no puedan excluirse.
+
+4. Derechos y servicios de terceros
+No se concede permiso para redistribuir ni modificar la aplicación. Consulte el aviso de derechos de autor para obtener más información. Los componentes de terceros están sujetos a sus licencias individuales. Los sitios externos y los servicios de donación se rigen por las condiciones y políticas de sus respectivos operadores. Una donación no es la compra de funciones de la aplicación ni una garantía de asistencia.
+
+5. Configuración y salida
+La configuración se guarda en este PC. Al cerrar la ventana, la aplicación permanece en el área de notificación; para detenerla por completo, seleccione «Salir de la aplicación». El inicio automático puede modificarse en la configuración. Las condiciones revisadas se incluyen en la versión a la que se aplican.
+
+6. Contacto
+Desarrollador: mmiyaji
+Incidencias y preguntas: https://github.com/mmiyaji/SpeakerHop/issues
+No publique información personal, como el nombre del dispositivo, el nombre de usuario o registros, en incidencias públicas.

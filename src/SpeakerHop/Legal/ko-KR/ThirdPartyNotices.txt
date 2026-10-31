@@ -1,0 +1,10 @@
+SpeakerHop 타사 고지
+
+이 디렉터리의 타사 라이선스 원문과 Microsoft 패키지 고지는 번역하지 않고 원문 그대로 제공합니다. 원본 카탈로그와 구성 요소별 파일 선택 기능을 사용할 수 있습니다.
+
+- NAudio 2.2.1: MIT 라이선스.
+- Windows App SDK 1.7.250606001: Microsoft 소프트웨어 사용 조건.
+- WebView2 SDK 1.0.2903.40: Microsoft 소프트웨어 사용 조건.
+- .NET 및 Windows Desktop 런타임 8.0.33: MIT 라이선스 및 전체 타사 고지.
+- Windows SDK .NET Ref 10.0.19041.57: Microsoft Windows SDK 사용 조건.
+- CsWinRT 2.2.0: MIT 라이선스.

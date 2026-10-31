@@ -1,0 +1,12 @@
+Avisos de terceros
+
+La aplicación incluye componentes sujetos a sus propias condiciones de licencia. Los textos originales de las licencias y los avisos se encuentran en la carpeta ThirdParty. Se mantienen en su idioma original; este índice sirve de guía y no los sustituye.
+
+- NAudio 2.2.1: licencia MIT.
+- Windows App SDK 1.7.250606001: condiciones de licencia de Microsoft.
+- WebView2 SDK 1.0.2903.40: condiciones de licencia de Microsoft.
+- .NET y Windows Desktop Runtime 8.0.33: licencia MIT y avisos completos de componentes de terceros.
+- Referencia .NET de Windows SDK 10.0.19041.57: condiciones de licencia de Microsoft Windows SDK.
+- CsWinRT 2.2.0: licencia MIT.
+
+Está disponible el catálogo original completo y la selección por componente.

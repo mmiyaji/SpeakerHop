@@ -1,4 +1,4 @@
-﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace SpeakerHop.Controls;
@@ -11,6 +11,7 @@ internal sealed class PageSurface : UserControl
 
     public PageSurface()
     {
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetAutomationId(Scroller, "Page.Scroll");
         Scroller.Content = Body;
         Content = Scroller;
     }

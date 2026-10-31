@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\src\SpeakerHop\Legal\**\*.txt" Link="Legal\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\..\src\SpeakerHop.Core\SpeakerHop.Core.csproj" />
   </ItemGroup>
 </Project>
