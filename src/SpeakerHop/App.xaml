@@ -4,6 +4,39 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="SpeakerHop.PageBackgroundBrush" Color="#F3F3F3" />
+                    <SolidColorBrush x:Key="SpeakerHop.PanelBackgroundBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="SpeakerHop.StrokeBrush" Color="#DADADA" />
+                    <SolidColorBrush x:Key="SpeakerHop.PrimaryTextBrush" Color="#1C1C1C" />
+                    <SolidColorBrush x:Key="SpeakerHop.SecondaryTextBrush" Color="#5C5C5C" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="SpeakerHop.PageBackgroundBrush" Color="#0F0F0F" />
+                    <SolidColorBrush x:Key="SpeakerHop.PanelBackgroundBrush" Color="#1F1F1F" />
+                    <SolidColorBrush x:Key="SpeakerHop.StrokeBrush" Color="#3E3E3E" />
+                    <SolidColorBrush x:Key="SpeakerHop.PrimaryTextBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="SpeakerHop.SecondaryTextBrush" Color="#BEBEBE" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="SpeakerHop.PageBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.PanelBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.StrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.PrimaryTextBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                    <SolidColorBrush x:Key="SpeakerHop.SecondaryTextBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <Style x:Key="SpeakerHop.SettingsTitleTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{ThemeResource SpeakerHop.PrimaryTextBrush}" />
+            </Style>
+            <Style x:Key="SpeakerHop.SettingsDescriptionTextBlockStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{ThemeResource SpeakerHop.SecondaryTextBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>

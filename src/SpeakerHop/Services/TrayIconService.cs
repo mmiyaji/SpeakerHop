@@ -64,7 +64,7 @@ public sealed class TrayIconService : IDisposable
         var cycleItem = menu.Items.Add(T("tray.cycle"), null, (_, _) => _commands.CycleDevice());
         var settingsItem = menu.Items.Add(T("tray.settings"), null, (_, _) => _window.DispatcherQueue.TryEnqueue(_window.ShowSettings));
         menu.Items.Add(new ToolStripSeparator());
-        var exitItem = menu.Items.Add(T("tray.exit"), null, (_, _) => _window.DispatcherQueue.TryEnqueue(AppServices.ExitApplication));
+        var exitItem = menu.Items.Add(T("tray.exit"), null, (_, _) => _window.DispatcherQueue.TryEnqueue(() => _ = _window.RequestExitAsync()));
         menu.Opening += (_, _) =>
         {
             cycleItem.Text = T("tray.cycle");

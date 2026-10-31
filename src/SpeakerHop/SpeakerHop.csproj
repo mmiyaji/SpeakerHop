@@ -34,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Include="Controls\SettingsRow.xaml" />
     <None Include="Package.appxmanifest" />
     <None Include="Assets\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <None Include="Assets\App.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

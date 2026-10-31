@@ -34,6 +34,7 @@ public static class LocalizationService
         [Japanese] = new(StringComparer.OrdinalIgnoreCase)
         {
             ["common.cancel"] = "キャンセル",
+            ["shortcuts.discard"] = "変更を破棄",
             ["shortcuts.captureHint"] = "設定したいキーの組み合わせを押してください。修飾キーだけでは保存されません。",
             ["nav.devices"] = "デバイス",
             ["nav.shortcuts"] = "ショートカット",
@@ -168,6 +169,7 @@ public static class LocalizationService
             ["common.default"] = "Default",
             ["common.none"] = "None",
             ["common.cancel"] = "Cancel",
+            ["shortcuts.discard"] = "Discard changes",
             ["shortcuts.captureHint"] = "Press the key combination you want to assign. Modifier keys alone cannot be saved.",
             ["common.unknown"] = "Unknown",
             ["common.unpackaged"] = "Unpackaged",
