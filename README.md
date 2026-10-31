@@ -1,5 +1,9 @@
 # SpeakerHop
 
+**1.1.0 release candidate** (app/MSIX: `1.1.0.0`)
+
+[Release preparation](docs/releases/1.1.0.md) · [Changelog](CHANGELOG.md) · [Installation guide](docs/releases/INSTALL.md)
+
 WinUI 3 desktop app for switching the Windows default audio output device from the tray icon or global shortcuts.
 
 ![SpeakerHop overview with actual app screenshot](docs/images/speakerhop-readme-overview.png)
@@ -16,7 +20,10 @@ The README image uses an actual light-theme English SpeakerHop screenshot embedd
 - Global shortcuts can cycle, switch to a fixed device, change volume, toggle mute for the current default output device, or toggle mute for the Windows default capture endpoint.
 - The shortcut editor lists every action with its key binding, enabled state, and relevant target or volume-step setting. Unassigned actions remain visible, and each action supports multiple bindings.
 
-The existing **MuteToggle** action continues to mute the default output device. **MicrophoneMuteToggle** mutes the default capture endpoint for the Multimedia role; it does not change or use a separately assigned Communications default device. Adding the microphone action does not assign it a shortcut automatically.
+- Compact, aligned settings rows make device, shortcut, and settings pages easier to scan; the active output device is highlighted.
+- Output mute and microphone mute are separate shortcut actions. Microphone mute targets the default capture endpoint for the Multimedia role; neither action is assigned a shortcut automatically.
+- Settings changes are saved atomically. Shortcut edits are staged until saved, and failed persistence or hotkey registration is reported without silently discarding the existing configuration.
+- Legal documents follow the selected language: Japanese, English, Simplified Chinese, Traditional Chinese, Korean, German, French, or Spanish. Changing language requires confirmation.
 - MSIX manifest and packaging script are included for Microsoft Store preparation.
 
 ## Default shortcuts
@@ -40,7 +47,7 @@ Use Visual Studio Build Tools MSBuild. `dotnet build` may fail on machines where
 ## Create unsigned, self-contained MSIX
 
 ```powershell
-.\build-package.ps1 -Version 1.0.0.0 -Publisher 'CN=Your Partner Center Publisher'
+.\build-package.ps1 -Version 1.1.0.0 -Publisher 'CN=Your Partner Center Publisher'
 ```
 
 The script runs a clean self-contained .NET publish into `artifacts\publish-<version>`, validates that the .NET runtime and requested app version are present, copies only that publish output into a clean package layout, and excludes PDB files. Windows App Runtime 1.7 is a package dependency. `src\SpeakerHop\Package.appxmanifest` is the manifest template; package identity, version, architecture, publisher, and executable entry point are safely replaced for the requested package.
@@ -49,7 +56,7 @@ The unsigned package is written to `artifacts\SpeakerHop_<version>_x64.msix`. Fo
 
 ## Local release installation
 
-GitHub releases include a development ZIP and an unsigned MSIX for signing or Store submission. The unsigned MSIX is not a directly installable, trusted production installer.
+The planned release assets are a development ZIP and an unsigned MSIX for signing or Store submission. The unsigned MSIX is not a directly installable, trusted production installer. As checked on November 1, 2026, GitHub lists 1.0.26.0 as its latest release; 1.1.0 publication and asset availability are pending.
 
 For the development ZIP, enable Windows Developer Mode and install Windows App Runtime 1.7 (x64). Extract the ZIP and run:
 
@@ -57,15 +64,17 @@ For the development ZIP, enable Windows Developer Mode and install Windows App R
 .\install-local.ps1
 ```
 
-The installer copies the package to a stable folder under LocalAppData, registers it without removing settings, and launches it. If package registration is unavailable under your user profile, choose a writable local folder outside the checkout:
+The installer copies the package to a stable folder under LocalAppData, registers it without removing settings, and launches it. If package registration is unavailable under your user profile, choose a writable local folder outside the checkout (replace this example with your chosen location):
 
 ```powershell
-.\install-local.ps1 -InstallDirectory D:\Apps\SpeakerHop\1.0.30.0
+.\install-local.ps1 -InstallDirectory D:\Apps\SpeakerHop\1.1.0.0
 ```
 
 Do not move or delete the installed folder. The app shows its main window on the first launch; subsequent launches respect **Show main window on startup**. When that setting is off, open settings from the tray icon's context menu.
 
 Updates are staged and validated before the running app is stopped. An existing install folder is preserved; the installer selects a fresh sibling folder when the requested destination already exists. If registration fails, it attempts to restore the previous registration and restart the previous app. Any folder still used by a package registration is retained.
+
+The app uses desktop CoreAudio APIs and the commonly used PolicyConfig COM interface to change the default output. Windows does not expose a public WinRT API for this operation, so the packaged desktop app requires full trust (`runFullTrust`). A global shortcut may fail to register if another app already owns it; error `1409` indicates that conflict, and another shortcut can be assigned in Settings. Current builds share a single-instance guard across package identities. Exit any older test builds before updating.
 
 To run the unit tests and the installer transaction tests (the latter uses mocks and does not alter the installed app):
 

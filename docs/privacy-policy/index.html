@@ -102,75 +102,55 @@
   <main>
     <header>
       <h1>SpeakerHop Privacy Policy</h1>
-      <p class="muted">Last updated: June 28, 2026</p>
-      <p class="language-note">This page provides the privacy policy for SpeakerHop in Japanese and English.</p>
+      <p class="muted">Effective: November 1, 2026</p>
+      <p class="language-note">This page provides the privacy policy for SpeakerHop in Japanese and English. Windows, distribution services, and external destinations have their own policies.</p>
     </header>
 
     <section class="summary" aria-labelledby="summary-title">
       <h2 id="summary-title">Summary</h2>
-      <p>SpeakerHop runs locally on your Windows device. It stores app settings on your device and does not collect, transmit, sell, or share personal data.</p>
+      <p>SpeakerHop handles audio device and settings information on your PC. It does not automatically upload settings, logs, or audio. Opening the Donation tab does make a request to fetch its button image from the Buy Me a Coffee CDN, which receives normal connection information such as your IP address.</p>
     </section>
 
     <section class="section" lang="ja" aria-labelledby="ja-title">
       <h2 id="ja-title">日本語</h2>
-
-      <h3>1. 対象</h3>
-      <p>このプライバシーポリシーは、Windows 向けアプリ「SpeakerHop」に適用されます。SpeakerHop は、Windows の既定の音声出力デバイスをトレイアイコンやショートカットから切り替えるためのローカルアプリです。</p>
-
-      <h3>2. 収集する情報</h3>
-      <p>SpeakerHop は、個人情報、音声内容、マイク入力、利用状況分析、広告識別子、クラッシュレポートを収集または外部送信しません。</p>
-
-      <h3>3. 端末内に保存する情報</h3>
-      <p>SpeakerHop は、アプリの動作に必要な以下の設定をこの PC 内に保存します。</p>
-      <ul>
-        <li>切り替え対象として選択した音声出力デバイスの ID と名前</li>
-        <li>ショートカット設定</li>
-        <li>通知、テーマ、言語、起動時表示、自動起動に関する設定</li>
-      </ul>
-      <p>これらの設定は通常、<code>%LOCALAPPDATA%\SpeakerHop\settings.json</code> に保存されます。</p>
-
-      <h3>4. 音声データ</h3>
-      <p>SpeakerHop は音声の録音、再生内容の解析、マイク入力の取得を行いません。アプリは Windows の音声出力デバイス設定を切り替えるために、端末上の音声デバイス情報を参照します。</p>
-
-      <h3>5. 外部サービス</h3>
-      <p>SpeakerHop には、作者サイトや寄付ページをブラウザーで開くリンクが含まれる場合があります。これらの外部サイトを開いた後のデータの取り扱いは、それぞれのサイトのポリシーに従います。</p>
-
-      <h3>6. データの削除</h3>
-      <p>アプリをアンインストールすると、アプリ本体は削除されます。設定ファイルが残っている場合は、<code>%LOCALAPPDATA%\SpeakerHop</code> フォルダーを削除することでローカル設定を削除できます。</p>
-
-      <h3>7. お問い合わせ</h3>
-      <p>このポリシーに関する問い合わせは、<a href="https://github.com/mmiyaji/SpeakerHop/issues">GitHub Issues</a> からお願いします。</p>
+      <h3>1. 運営者と対象</h3>
+      <p>開発者: mmiyaji。本ポリシーはSpeakerHop本体の動作に関する説明です。Windows、配布サービス、外部リンク先にはそれぞれのポリシーも適用されます。</p>
+      <h3>2. このPCで扱う情報</h3>
+      <p>アプリは、接続された音声デバイスの名前・識別子、既定出力、音量・ミュート状態を音声操作のために扱います。設定ファイルには、ショートカットの組み合わせと操作、デバイスの名前・識別子・最終確認日時、循環対象、言語・テーマ・通知・起動設定を保存します。</p>
+      <p>設定したキーの組み合わせを検出します。キー割り当てダイアログでは、アプリが前面にある間にキーを取得します。通常の入力内容や入力履歴を記録・送信する機能はありません。マイク操作はミュート状態の変更であり、音声を録音・保存・送信する機能はありません。</p>
+      <h3>3. 保存場所・保持・削除</h3>
+      <p>設定はユーザープロファイル内のSpeakerHop/settings.jsonに保存します。パッケージ版ではWindowsによりパッケージのLocalCache領域へリダイレクトされる場合があります。「情報」の保存先表示も確認してください。</p>
+      <p>起動エラー等が発生すると、同じユーザー領域のSpeakerHop/crash.logに日時、例外メッセージ、スタックトレースを保存する場合があります。ログにはファイルパスやユーザー名が含まれる場合があります。壊れた設定を検出した場合、元の設定を.invalidファイルとしてバックアップします。</p>
+      <p>アプリはこれらを自動送信しません。設定・ログは、ご自身で削除するかOSが削除するまで残ります。削除する場合はアプリを完全終了してから設定、ログ、バックアップを削除してください。設定の削除で初期状態に戻ります。アンインストール時の保持・削除はWindowsおよびインストール方式にも依存します。</p>
+      <h3>4. 外部通信</h3>
+      <p>アプリ独自のアカウント、広告、アクセス解析、テレメトリー、自動クラッシュ送信の機能はありません。</p>
+      <p>寄付タブを開くと、Buy Me a CoffeeのCDN（cdn.buymeacoffee.com）からボタン画像を取得します。このリクエストでは接続先にIPアドレス等の通常の通信情報が伝わります。設定ファイルや音声データをそのリクエストに添付しません。</p>
+      <p>Webサイト、ソースコード、リリース、サポート、寄付のリンクを開くと既定のブラウザーで外部サイトへ移動し、そのサイトのポリシーが適用されます。Windowsや配布元が行う通信は本アプリ独自の通信とは別です。</p>
+      <h3>5. 共有と問い合わせ</h3>
+      <p>開発者に設定やログを送る仕組みはありません。問い合わせ時にご自身で共有する場合は、公開前に個人情報を除いてください。</p>
+      <p>連絡先: <a href="https://github.com/mmiyaji/SpeakerHop/issues">GitHub Issues</a>（公開）</p>
+      <p>本ポリシーの改訂は、改訂日を付した文書をアプリに同梱してお知らせします。</p>
     </section>
 
     <section class="section" lang="en" aria-labelledby="en-title">
       <h2 id="en-title">English</h2>
-
-      <h3>1. Scope</h3>
-      <p>This privacy policy applies to SpeakerHop for Windows. SpeakerHop is a local utility for switching the Windows default audio output device from the tray icon or keyboard shortcuts.</p>
-
-      <h3>2. Information collected</h3>
-      <p>SpeakerHop does not collect or transmit personal information, audio content, microphone input, analytics data, advertising identifiers, or crash reports.</p>
-
-      <h3>3. Information stored on your device</h3>
-      <p>SpeakerHop stores the following settings locally on your PC so the app can function:</p>
-      <ul>
-        <li>IDs and names of audio output devices selected for the switching cycle</li>
-        <li>Keyboard shortcut settings</li>
-        <li>Notification, theme, language, startup window, and start-with-Windows settings</li>
-      </ul>
-      <p>These settings are normally stored at <code>%LOCALAPPDATA%\SpeakerHop\settings.json</code>.</p>
-
-      <h3>4. Audio data</h3>
-      <p>SpeakerHop does not record audio, inspect playback content, or access microphone input. It reads audio device information on your device only to switch the Windows output device setting.</p>
-
-      <h3>5. External services</h3>
-      <p>SpeakerHop may include links that open the author's website or a donation page in your browser. Once you open an external site, that site handles data according to its own policy.</p>
-
-      <h3>6. Deleting data</h3>
-      <p>Uninstalling the app removes the app itself. If local settings remain, you can delete them by removing the <code>%LOCALAPPDATA%\SpeakerHop</code> folder.</p>
-
-      <h3>7. Contact</h3>
-      <p>For questions about this policy, please use <a href="https://github.com/mmiyaji/SpeakerHop/issues">GitHub Issues</a>.</p>
+      <h3>1. Operator and scope</h3>
+      <p>Developer: mmiyaji. This policy describes SpeakerHop itself. Windows, distribution services and external destinations also have their own policies.</p>
+      <h3>2. Information handled on this PC</h3>
+      <p>The app uses connected audio device names and identifiers, the default output, volume and mute state to perform audio operations. The settings file stores shortcut combinations and actions; device names, identifiers and last-seen times; cycle selections; and language, theme, notification and startup preferences.</p>
+      <p>The app detects configured key combinations. In the shortcut capture dialog, keys are captured while the app is in the foreground. It has no feature that records or transmits ordinary typing content or typing history. Microphone control changes mute state; the app does not record, save or transmit audio.</p>
+      <h3>3. Storage, retention and deletion</h3>
+      <p>Settings are saved in SpeakerHop/settings.json in the user profile. For packaged installations, Windows may redirect storage into the package's LocalCache area. Also see the storage location displayed under Information.</p>
+      <p>Startup and similar errors may create SpeakerHop/crash.log in the same user area, containing timestamps, exception messages and stack traces. Logs may include paths or usernames. Invalid settings may be backed up in .invalid files.</p>
+      <p>The app does not automatically upload these files. Settings and logs remain until you or the OS delete them. Exit the app completely before deleting settings, logs and backups. Deleting settings restores initial preferences. Retention or deletion on uninstall also depends on Windows and the installation method.</p>
+      <h3>4. External network requests</h3>
+      <p>The app has no account, advertising, analytics, telemetry or automatic crash reporting features.</p>
+      <p>Opening the Donation tab fetches a button image from the Buy Me a Coffee CDN (cdn.buymeacoffee.com). The provider receives normal connection information such as your IP address. Settings files and audio are not attached to that request.</p>
+      <p>Website, source code, release, support and donation links open an external site in the default browser, where the destination's policy applies. Networking performed by Windows or distribution services is separate from this app's own requests.</p>
+      <h3>5. Sharing and contact</h3>
+      <p>The app has no built-in mechanism to send settings or logs to the developer. If you voluntarily share them in a support request, remove personal information before publishing.</p>
+      <p>Contact: <a href="https://github.com/mmiyaji/SpeakerHop/issues">GitHub Issues</a> (public)</p>
+      <p>Policy revisions are announced by bundling a dated revised document with the app.</p>
     </section>
   </main>
 </body>
