@@ -38,7 +38,7 @@ public sealed partial class MainWindow
         _content.Children.Clear();
         AddHeader(T("donation.title"), T("donation.subtitle"));
 
-        var panel = new StackPanel { Spacing = 14 };
+        var panel = new StackPanel { Spacing = Controls.UiMetrics.SectionGap };
         panel.Children.Add(TextBlock(T("donation.message"), 13, SecondaryTextBrush));
 
         var fallbackText = new TextBlock
@@ -79,8 +79,8 @@ public sealed partial class MainWindow
     {
         var grid = new Grid
         {
-            RowSpacing = 6,
-            ColumnSpacing = 20
+            RowSpacing = Controls.UiMetrics.ControlGap,
+            ColumnSpacing = Controls.UiMetrics.SectionGap
         };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -96,11 +96,11 @@ public sealed partial class MainWindow
 
     private UIElement AboutLinks()
     {
-        var links = new StackPanel { Spacing = 2 };
+        var links = new StackPanel { Spacing = Controls.UiMetrics.ControlGap };
         links.Children.Add(TextBlock(T("about.linksHeading"), 16, TextBrush));
         foreach (var (key, suffix) in new[] { ("about.releases", "/releases"), ("about.support", "/issues") })
         {
-            var link = new HyperlinkButton { Content = T(key), NavigateUri = new Uri("https://github.com/mmiyaji/SpeakerHop" + suffix), Padding = new Thickness(0, 4, 0, 4) };
+            var link = new HyperlinkButton { Content = T(key), NavigateUri = new Uri("https://github.com/mmiyaji/SpeakerHop" + suffix), Padding = new Thickness(0, 4, 0, 4), MinHeight = Controls.UiMetrics.ButtonMinHeight };
             SetAutomation(link, key, T(key));
             links.Children.Add(link);
         }
@@ -109,15 +109,18 @@ public sealed partial class MainWindow
 
     private UIElement AboutLegal()
     {
-        var panel = new StackPanel { Spacing = 4 };
-        panel.Children.Add(TextBlock(T("about.legalHeading"), 16, TextBrush));
-        panel.Children.Add(TextBlock(T("about.dataSummary"), 13, SecondaryTextBrush));
+        var panel = new StackPanel { Spacing = Controls.UiMetrics.ControlGap };
+        var heading = new StackPanel { Spacing = Controls.UiMetrics.LabelGap };
+        heading.Children.Add(TextBlock(T("about.legalHeading"), 16, TextBrush));
+        heading.Children.Add(TextBlock(T("about.dataSummary"), 13, SecondaryTextBrush));
+        panel.Children.Add(heading);
         foreach (var (key, file) in new[] { ("about.copyright", "Copyright.txt"), ("about.terms", "Terms.txt"), ("about.privacyPolicy", "Privacy.txt"), ("about.thirdParty", "ThirdPartyNotices.txt") })
         {
             var button = new Button
             {
                 Content = T(key), HorizontalAlignment = HorizontalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Left, Padding = new Thickness(10, 7, 10, 7)
+                HorizontalContentAlignment = HorizontalAlignment.Left, Padding = Controls.UiMetrics.ButtonPadding,
+                MinHeight = Controls.UiMetrics.ButtonMinHeight
             };
             SetAutomation(button, key, T(key));
             button.Click += async (_, _) => await ShowLegalDocumentAsync(T(key), file);
@@ -128,7 +131,7 @@ public sealed partial class MainWindow
 
     private UIElement AboutStorage()
     {
-        var panel = new StackPanel { Spacing = 6 };
+        var panel = new StackPanel { Spacing = Controls.UiMetrics.ControlGap };
         panel.Children.Add(TextBlock(T("about.storageDescription"), 13, SecondaryTextBrush));
         var path = TextBlock(AppServices.Settings.SettingsPath, 12, TextBrush);
         path.IsTextSelectionEnabled = true;
@@ -137,7 +140,7 @@ public sealed partial class MainWindow
         panel.Children.Add(TextBlock(T("about.environment") + $" Windows {Environment.OSVersion.Version} \u00B7 {RuntimeInformation.ProcessArchitecture}", 12, SecondaryTextBrush));
         return new Expander { Header = T("about.storageHeading"), Content = panel,
             HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
-            Margin = new Thickness(0, 4, 0, 8) };
+            Margin = new Thickness(0, 8, 0, 8) };
     }
 
     private sealed record LegalDocument(string Name, string Path);
@@ -168,7 +171,7 @@ public sealed partial class MainWindow
             };
             ScrollViewer.SetVerticalScrollBarVisibility(text, ScrollBarVisibility.Auto);
             SetAutomation(text, "About.LegalText", title);
-            var panel = new StackPanel { Spacing = 8, MinWidth = 0 };
+            var panel = new StackPanel { Spacing = Controls.UiMetrics.ControlGap, MinWidth = 0 };
             if (documents.Count > 1)
             {
                 var selector = new ComboBox { ItemsSource = documents, DisplayMemberPath = nameof(LegalDocument.Name),
@@ -206,7 +209,7 @@ public sealed partial class MainWindow
 
     private UIElement ExitApplicationCard()
     {
-        var grid = new Grid { ColumnSpacing = 12, RowSpacing = 8 };
+        var grid = new Grid { ColumnSpacing = Controls.UiMetrics.ControlGap, RowSpacing = Controls.UiMetrics.ControlGap };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -218,14 +221,14 @@ public sealed partial class MainWindow
             Foreground = new SolidColorBrush((Color)Application.Current.Resources["SystemAccentColor"]),
             VerticalAlignment = VerticalAlignment.Center
         };
-        var text = new StackPanel { Spacing = 4 };
+        var text = new StackPanel { Spacing = Controls.UiMetrics.LabelGap };
         text.Children.Add(TextBlock(T("about.exitApplication"), 16, TextBrush));
         text.Children.Add(TextBlock(T("about.exitApplicationDescription"), 13, SecondaryTextBrush));
 
         var button = ActionButton(T("about.exitApplication"), () => _ = RequestExitAsync());
         button.Content = new StackPanel
         {
-            Orientation = Orientation.Horizontal, Spacing = 8,
+            Orientation = Orientation.Horizontal, Spacing = Controls.UiMetrics.ControlGap,
             Children =
             {
                 new FontIcon { Glyph = "\uE7E8", FontSize = 14, VerticalAlignment = VerticalAlignment.Center },
@@ -275,8 +278,8 @@ public sealed partial class MainWindow
         {
             Content = uri,
             NavigateUri = new Uri(uri),
-            Padding = new Thickness(0),
-            MinHeight = 0
+            Padding = new Thickness(0, 4, 0, 4),
+            MinHeight = Controls.UiMetrics.ButtonMinHeight,
         };
         SetAutomation(link, $"About.Link.{row}", uri);
         Grid.SetRow(labelBlock, row);

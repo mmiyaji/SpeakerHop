@@ -184,7 +184,7 @@ public sealed partial class MainWindow : Window
         _root.Children.Add(_titleBar);
         SetTitleBar(_titleBar);
 
-        _contentScroll.Padding = new Thickness(20, 16, 20, 20);
+        _contentScroll.Padding = Controls.UiMetrics.PagePadding(0);
         AddFallbackWinUiResources(_contentScroll.Resources);
 
         _navigation.Background = PageBrush;
@@ -252,7 +252,7 @@ public sealed partial class MainWindow : Window
             Foreground = TextBrush,
             FontSize = 13,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(10, 0, 0, 0)
+            Margin = new Thickness(8, 0, 0, 0)
         };
 
         Grid.SetColumn(_titleText, 1);
@@ -337,12 +337,7 @@ public sealed partial class MainWindow : Window
         }
 
         _layoutMode = mode;
-        _contentScroll.Padding = mode switch
-        {
-            0 => new Thickness(20, 16, 20, 20),
-            1 => new Thickness(16, 14, 16, 16),
-            _ => new Thickness(12, 12, 12, 14)
-        };
+        _contentScroll.Padding = Controls.UiMetrics.PagePadding(mode);
 
         if (_content.Children.Count != 0)
         {
@@ -424,12 +419,7 @@ public sealed partial class MainWindow : Window
             SetStatus("");
         _currentPageTag = tag;
         _pagePresenter.Content = CurrentPage;
-        _contentScroll.Padding = CurrentLayoutMode() switch
-        {
-            0 => new Thickness(20, 16, 20, 20),
-            1 => new Thickness(16, 14, 16, 16),
-            _ => new Thickness(12, 12, 12, 14)
-        };
+        _contentScroll.Padding = Controls.UiMetrics.PagePadding(CurrentLayoutMode());
         _automationSequence = 0;
         switch (tag)
         {

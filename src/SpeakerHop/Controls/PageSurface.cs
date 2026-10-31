@@ -7,7 +7,7 @@ namespace SpeakerHop.Controls;
 internal sealed class PageSurface : UserControl
 {
     public StackPanel Body { get; } = new();
-    public ScrollViewer Scroller { get; } = new() { Padding = new Thickness(20, 16, 20, 20) };
+    public ScrollViewer Scroller { get; } = new() { Padding = UiMetrics.PagePadding(0) };
 
     public PageSurface()
     {

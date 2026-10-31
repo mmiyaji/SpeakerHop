@@ -45,7 +45,13 @@
                     <SolidColorBrush x:Key="SpeakerHop.SecondaryTextBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+            <Style TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="MinHeight" Value="32" />
+            </Style>
             <Style x:Key="SpeakerHop.CriticalActionStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="MinHeight" Value="32" />
                 <Setter Property="CornerRadius" Value="4" />
                 <Setter Property="Background" Value="{ThemeResource SpeakerHop.Action.CriticalBackground}" />
                 <Setter Property="Foreground" Value="{ThemeResource SpeakerHop.Action.CriticalForeground}" />
@@ -53,6 +59,8 @@
                 <Setter Property="BorderThickness" Value="1" />
             </Style>
             <Style x:Key="SpeakerHop.CancelActionStyle" TargetType="Button" BasedOn="{StaticResource DefaultButtonStyle}">
+                <Setter Property="Padding" Value="8,4" />
+                <Setter Property="MinHeight" Value="32" />
                 <Setter Property="CornerRadius" Value="4" />
                 <Setter Property="Background" Value="{ThemeResource SpeakerHop.Action.CancelBackground}" />
                 <Setter Property="Foreground" Value="{ThemeResource SpeakerHop.Action.CancelForeground}" />

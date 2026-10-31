@@ -41,15 +41,15 @@ public sealed partial class MainWindow
         _discardHotkeysButton = discardButton;
         UpdateDraftActions();
         var saveBar = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right,
-            Spacing = 6, Margin = new Thickness(0, 0, 0, 6), Children = { discardButton, saveButton } };
+            Spacing = Controls.UiMetrics.ControlGap, Margin = new Thickness(0, 0, 0, 8), Children = { discardButton, saveButton } };
         _content.Children.Add(saveBar);
 
-        var header = new Grid { ColumnSpacing = 8, Margin = new Thickness(8, 0, 8, 4) };
+        var header = new Grid { ColumnSpacing = Controls.UiMetrics.ControlGap, Margin = new Thickness(8, 0, 8, 4) };
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(68) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(72) });
         header.Children.Add(TextBlock(T("shortcuts.enabledShort"), 12, SecondaryTextBrush));
         var actionHeading = TextBlock(T("shortcuts.actionLabel"), 12, SecondaryTextBrush);
         Grid.SetColumn(actionHeading, 1);
@@ -66,7 +66,7 @@ public sealed partial class MainWindow
         foreach (var action in Enum.GetValues<HotkeyActionType>())
         {
             var rows = _hotkeyDraft.Where(hotkey => hotkey.Action == action).ToList();
-            var group = new StackPanel { Spacing = 3, Margin = new Thickness(0, 0, 0, 8) };
+            var group = new StackPanel { Spacing = 0, Margin = new Thickness(0) };
             foreach (var hotkey in rows)
                 group.Children.Add(HotkeyRow(hotkey, rows, ReferenceEquals(hotkey, rows[0])));
             _content.Children.Add(group);
@@ -78,12 +78,12 @@ public sealed partial class MainWindow
     {
         var draft = _hotkeyDraft ?? throw new InvalidOperationException("Hotkey draft is not initialized.");
         var narrow = CurrentLayoutMode() == 2;
-        var grid = new Grid { ColumnSpacing = 8, RowSpacing = 4, MinHeight = 42 };
+        var grid = new Grid { ColumnSpacing = Controls.UiMetrics.ControlGap, RowSpacing = Controls.UiMetrics.LabelGap, MinHeight = UiMetrics.ButtonMinHeight };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(narrow ? 120 : 150) });
         if (!narrow) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(narrow ? 68 : 68) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(72) });
         if (narrow) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         var enabled = new CheckBox
         {
@@ -166,12 +166,12 @@ public sealed partial class MainWindow
             setting = new StackPanel
             {
                 Orientation = Orientation.Horizontal,
-                Spacing = 4,
+                Spacing = Controls.UiMetrics.LabelGap,
                 VerticalAlignment = VerticalAlignment.Center,
                 Children = { number, TextBlock("%", 13, SecondaryTextBrush) }
             };
         }
-        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center,
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Controls.UiMetrics.ControlGap, VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = HorizontalAlignment.Right };
         if (firstRow)
             actions.Children.Add(InlineButton("\uE710", () => AddShortcut(hotkey.Action),
@@ -294,7 +294,7 @@ public sealed partial class MainWindow
         };
         var content = new StackPanel
         {
-            Spacing = 6,
+            Spacing = Controls.UiMetrics.ControlGap,
             MinWidth = 380,
             Children = { hint, gesture, error }
         };

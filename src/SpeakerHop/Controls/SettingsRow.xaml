@@ -2,7 +2,7 @@
     x:Class="SpeakerHop.Controls.SettingsRow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid x:Name="LayoutRoot" Padding="8,6" SizeChanged="LayoutRoot_SizeChanged">
+    <Grid x:Name="LayoutRoot" Padding="0" SizeChanged="LayoutRoot_SizeChanged">
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="TextColumn" Width="*" />
             <ColumnDefinition x:Name="EditorColumn" Width="Auto" />
@@ -11,10 +11,10 @@
             <RowDefinition x:Name="TextRow" Height="Auto" />
             <RowDefinition x:Name="EditorRow" Height="Auto" />
         </Grid.RowDefinitions>
-        <StackPanel x:Name="TextPanel" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+        <StackPanel x:Name="TextPanel" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" Spacing="4">
             <TextBlock x:Name="TitleText" Style="{StaticResource SpeakerHop.SettingsTitleTextBlockStyle}" TextWrapping="Wrap" />
             <TextBlock x:Name="DescriptionText" Style="{StaticResource SpeakerHop.SettingsDescriptionTextBlockStyle}" TextWrapping="Wrap" />
         </StackPanel>
-        <ContentPresenter x:Name="EditorPresenter" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" MaxWidth="260" />
+        <ContentPresenter x:Name="EditorPresenter" Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0" HorizontalAlignment="Right" MaxWidth="260" />
     </Grid>
 </UserControl>

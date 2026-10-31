@@ -37,7 +37,7 @@ public sealed partial class MainWindow
             Text = subtitle,
             Foreground = SecondaryTextBrush,
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 12)
+            Margin = new Thickness(0, 0, 0, 16)
         });
     }
 
@@ -46,8 +46,8 @@ public sealed partial class MainWindow
         var row = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Margin = new Thickness(0, 6, 0, 0),
+            Spacing = Controls.UiMetrics.ControlGap,
+            Margin = new Thickness(0, 8, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Left
         };
         foreach (var action in actions)
@@ -64,9 +64,9 @@ public sealed partial class MainWindow
         var button = new Button
         {
             Content = text,
-            Padding = new Thickness(8, 4, 8, 4),
-            MinWidth = 0,
-            MinHeight = 32,
+            Padding = Controls.UiMetrics.ButtonPadding,
+            MinWidth = UiMetrics.ButtonMinWidth,
+            MinHeight = UiMetrics.ButtonMinHeight,
             MaxWidth = 260
         };
         AddFallbackWinUiResources(button.Resources);
@@ -86,8 +86,8 @@ public sealed partial class MainWindow
                 BorderBrush = StrokeBrush,
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(10),
-                Margin = new Thickness(0, 0, 0, 6),
+                Padding = new Thickness(UiMetrics.RowPadding),
+                Margin = new Thickness(0, 0, 0, 8),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch
             };
@@ -102,8 +102,8 @@ public sealed partial class MainWindow
             BorderBrush = StrokeBrush,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(10),
-            Margin = new Thickness(0, 0, 0, 6),
+            Padding = new Thickness(UiMetrics.RowPadding),
+            Margin = new Thickness(0, 0, 0, 8),
             Child = child
         };
     }
@@ -116,8 +116,8 @@ public sealed partial class MainWindow
             BorderBrush = StrokeBrush,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(8, 5, 8, 5),
-            Margin = new Thickness(0, 0, 0, 4),
+            Padding = new Thickness(UiMetrics.RowPadding),
+            Margin = new Thickness(0, 0, 0, 8),
             Child = child
         };
     }
@@ -129,9 +129,10 @@ public sealed partial class MainWindow
             Content = glyphOrText.Length == 1 && glyphOrText[0] >= '\uE000'
                 ? new FontIcon { Glyph = glyphOrText, FontSize = 12 }
                 : glyphOrText,
-            Padding = new Thickness(6, 3, 6, 3),
-            MinWidth = 30,
-            MinHeight = 30,
+            Padding = Controls.UiMetrics.ButtonPadding,
+            MinWidth = UiMetrics.ButtonMinWidth,
+            Width = glyphOrText.Length == 1 && glyphOrText[0] >= '\uE000' ? UiMetrics.ButtonMinWidth : double.NaN,
+            MinHeight = UiMetrics.ButtonMinHeight,
             VerticalAlignment = VerticalAlignment.Center
         };
         AddFallbackWinUiResources(button.Resources);

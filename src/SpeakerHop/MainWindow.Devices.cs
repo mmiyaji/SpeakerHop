@@ -71,11 +71,11 @@ public sealed partial class MainWindow
 
     private UIElement NotificationOptionRow()
     {
-        var panel = new Grid { ColumnSpacing = 12 };
+        var panel = new Grid { ColumnSpacing = Controls.UiMetrics.ControlGap };
         panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         panel.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var text = new StackPanel { Spacing = 4 };
+        var text = new StackPanel { Spacing = Controls.UiMetrics.LabelGap };
         text.Children.Add(TextBlock(T("devices.notification"), 16, TextBrush));
         text.Children.Add(TextBlock(T("devices.notificationDescription"), 12, SecondaryTextBrush));
 
@@ -154,7 +154,7 @@ public sealed partial class MainWindow
         SetAutomation(checkBox, $"Devices.Include.{device.Id}",
             $"{device.Name}. {T("devices.subtitle")}");
         var (primaryName, secondaryName) = SplitDeviceName(device.Name);
-        var namePanel = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+        var namePanel = new StackPanel { Spacing = Controls.UiMetrics.LabelGap, VerticalAlignment = VerticalAlignment.Center };
         namePanel.Children.Add(new TextBlock
         {
             Text = primaryName,
@@ -203,6 +203,8 @@ public sealed partial class MainWindow
             Content = T("devices.switch"),
             IsEnabled = device.IsConnected && !device.IsDefault,
             MinWidth = 64,
+            MinHeight = Controls.UiMetrics.ButtonMinHeight,
+            Padding = Controls.UiMetrics.ButtonPadding,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -218,6 +220,8 @@ public sealed partial class MainWindow
         {
             Content = assignedHotkey?.GestureText ?? T("shortcuts.key"),
             MinWidth = 112,
+            MinHeight = Controls.UiMetrics.ButtonMinHeight,
+            Padding = Controls.UiMetrics.ButtonPadding,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -232,7 +236,7 @@ public sealed partial class MainWindow
         var actions = new StackPanel
         {
             Orientation = layoutMode == 2 ? Orientation.Vertical : Orientation.Horizontal,
-            Spacing = 8,
+            Spacing = Controls.UiMetrics.ControlGap,
             VerticalAlignment = VerticalAlignment.Center,
             HorizontalAlignment = layoutMode == 2 ? HorizontalAlignment.Stretch : HorizontalAlignment.Right
         };
@@ -244,7 +248,7 @@ public sealed partial class MainWindow
         actions.Children.Add(shortcutButton);
         actions.Children.Add(switchButton);
 
-        var row = new Grid { ColumnSpacing = 10 };
+        var row = new Grid { ColumnSpacing = Controls.UiMetrics.ControlGap };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -263,7 +267,7 @@ public sealed partial class MainWindow
             Grid.SetRow(actions, 1);
             Grid.SetColumn(actions, 1);
             Grid.SetColumnSpan(actions, 2);
-            actions.Margin = new Thickness(0, 10, 0, 0);
+            actions.Margin = new Thickness(0, 8, 0, 0);
         }
         row.Children.Add(checkBox);
         row.Children.Add(namePanel);

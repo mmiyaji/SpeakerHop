@@ -81,6 +81,7 @@ public sealed partial class SettingsRow : UserControl
             Grid.SetRow(EditorPresenter, 1);
             Grid.SetColumn(EditorPresenter, 0);
             EditorPresenter.HorizontalAlignment = HorizontalAlignment.Stretch;
+            EditorPresenter.Margin = new Thickness(0, 8, 0, 0);
             EditorPresenter.MaxWidth = double.PositiveInfinity;
         }
         else
@@ -90,6 +91,7 @@ public sealed partial class SettingsRow : UserControl
             Grid.SetRow(EditorPresenter, 0);
             Grid.SetColumn(EditorPresenter, 1);
             EditorPresenter.HorizontalAlignment = HorizontalAlignment.Right;
+            EditorPresenter.Margin = new Thickness(16, 0, 0, 0);
             EditorPresenter.MaxWidth = 260;
         }
 
