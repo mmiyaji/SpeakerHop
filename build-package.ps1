@@ -62,6 +62,15 @@ foreach ($resource in @('SpeakerHop.pri', 'App.xbf')) {
     Copy-Item -LiteralPath $resourcePath -Destination $publishRoot -Force
 }
 
+# Include compiled views and controls using their generated relative paths.
+Get-ChildItem -LiteralPath $buildRoot -Filter *.xbf -Recurse -File | Where-Object {
+    $_.FullName -notmatch '\\(AppX|publish)\\'
+} | ForEach-Object {
+    $relative = $_.FullName.Substring($buildRoot.Length).TrimStart('\')
+    $destination = Join-Path $publishRoot $relative
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
+    Copy-Item -LiteralPath $_.FullName -Destination $destination -Force
+}
 $windowIcon = Join-Path $publishRoot "Assets\App.ico"
 if (-not (Test-Path (Join-Path $publishRoot 'coreclr.dll'))) {
     throw 'Self-contained .NET runtime is missing from publish output.'
