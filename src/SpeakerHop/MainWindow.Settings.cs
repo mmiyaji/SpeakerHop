@@ -34,18 +34,10 @@ public sealed partial class MainWindow
             T("settings.languageDescription"),
             AppServices.Settings.Current.Language,
             LocalizationService.SupportedLanguages
-                .Select(language => new SelectOption(language.Code, T(language.ResourceKey)))
+                .Select(language => new SelectOption(language.Code,
+                    LocalizationService.LanguageDisplayName(language.Code, AppServices.Settings.Current.Language)))
                 .ToList(),
-            value =>
-            {
-                var previous = AppServices.Settings.Current.Language;
-                try { AppServices.Settings.Current.Language = value; AppServices.Settings.Save(); }
-                catch (Exception ex) { AppServices.Settings.Current.Language = previous; ShowPersistenceError(ex.Message); ShowSettingsPage(); return; }
-                BuildNavigationItems();
-                ApplyTheme();
-                SelectPage(SettingsTag);
-                SetStatus(T("settings.applied"));
-            }));
+            ApplyLanguageSelectionAsync));
         _content.Children.Add(SettingsOptionCard(
             T("settings.theme"),
             T("settings.themeDescription"),
@@ -90,6 +82,18 @@ public sealed partial class MainWindow
         string selectedValue,
         IReadOnlyList<SelectOption> options,
         Action<string> changed)
+        => SettingsOptionCard(title, description, selectedValue, options, value =>
+        {
+            changed(value);
+            return Task.CompletedTask;
+        });
+
+    private UIElement SettingsOptionCard(
+        string title,
+        string description,
+        string selectedValue,
+        IReadOnlyList<SelectOption> options,
+        Func<string, Task> changed)
     {
         var comboBox = new ComboBox
         {
@@ -102,12 +106,17 @@ public sealed partial class MainWindow
         AddFallbackWinUiResources(comboBox.Resources);
         var editorAutomationId = $"Settings.Option.{++_automationSequence}";
         SetAutomation(comboBox, editorAutomationId, title);
-        comboBox.SelectionChanged += (_, _) =>
+        comboBox.SelectionChanged += async (_, _) =>
         {
             if (comboBox.SelectedItem is SelectOption option &&
                 !string.Equals(option.Value, selectedValue, StringComparison.OrdinalIgnoreCase))
             {
-                changed(option.Value);
+                comboBox.IsDropDownOpen = false;
+                comboBox.SelectedItem = options.FirstOrDefault(item => string.Equals(item.Value, selectedValue, StringComparison.OrdinalIgnoreCase));
+                comboBox.IsEnabled = false;
+                try { await changed(option.Value); }
+                catch (Exception ex) { ShowPersistenceError(ex.Message); }
+                finally { comboBox.IsEnabled = true; }
             }
         };
 
@@ -121,6 +130,77 @@ public sealed partial class MainWindow
         };
         SetAutomation(row, $"{editorAutomationId}.Row", title);
         return CompactRow(row);
+    }
+
+    private async Task ApplyLanguageSelectionAsync(string requestedLanguage)
+    {
+        var previousLanguage = AppServices.Settings.Current.Language;
+        if (_languageConfirmationPending || string.Equals(requestedLanguage, previousLanguage, StringComparison.OrdinalIgnoreCase)) return;
+        _languageConfirmationPending = true;
+        var saved = false;
+        try
+        {
+            var resolvedCurrent = LocalizationService.ResolveLanguage(previousLanguage);
+            var targetName = LocalizationService.LanguageDisplayName(requestedLanguage, previousLanguage);
+            var currentText = LocalizationService.Text("settings.languageConfirmMessage", previousLanguage);
+            var message = string.Format(currentText, targetName);
+            if (!string.Equals(resolvedCurrent, LocalizationService.English, StringComparison.OrdinalIgnoreCase))
+                message += "\n\n" + string.Format(LocalizationService.Text("settings.languageConfirmMessage", LocalizationService.English), targetName);
+
+            var confirmationContent = TextBlock(message, 14, TextBrush);
+            SetAutomation(confirmationContent, "Confirmation.LanguageMessage", message);
+            var dialog = new ContentDialog
+            {
+                XamlRoot = _root.XamlRoot,
+                RequestedTheme = _root.RequestedTheme,
+                Title = T("settings.languageConfirmTitle"),
+                Content = confirmationContent,
+                PrimaryButtonText = DualDialogLabel("settings.languageConfirmChange", "Change", previousLanguage),
+                CloseButtonText = DualDialogLabel("common.cancel", "Cancel", previousLanguage),
+                DefaultButton = ContentDialogButton.Close
+            };
+            dialog.Resources["ContentDialogMinWidth"] = Math.Min(440, Math.Max(280, _root.ActualWidth - 48));
+            AutomationProperties.SetAutomationId(dialog, "Confirmation.Language");
+            Controls.ActionButtonStyles.ApplyDialog(dialog);
+            // Let the ComboBox popup close before opening a modal dialog.
+            await Task.Yield();
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+
+            try
+            {
+                AppServices.Settings.Current.Language = requestedLanguage;
+                AppServices.Settings.Save();
+                saved = true;
+            }
+            catch (Exception ex)
+            {
+                AppServices.Settings.Current.Language = previousLanguage;
+                ShowPersistenceError(ex.Message);
+                return;
+            }
+
+            BuildNavigationItems();
+            ApplyTheme();
+            SelectPage(SettingsTag);
+            SetStatus(T("settings.applied"));
+        }
+        catch (Exception ex)
+        {
+            if (!saved) AppServices.Settings.Current.Language = previousLanguage;
+            ShowPersistenceError(ex.Message);
+        }
+        finally
+        {
+            _languageConfirmationPending = false;
+        }
+    }
+
+    private bool _languageConfirmationPending;
+
+    private string DualDialogLabel(string key, string english, string currentLanguage)
+    {
+        var localized = LocalizationService.Text(key, currentLanguage);
+        return string.Equals(localized, english, StringComparison.OrdinalIgnoreCase) ? english : $"{localized} ({english})";
     }
 
     private UIElement SettingsToggleCard(

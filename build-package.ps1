@@ -1,7 +1,7 @@
 param(
     [string]$Configuration = "Release",
     [string]$Platform = "x64",
-    [string]$Version = "1.0.34.0",
+    [string]$Version = "1.0.35.0",
     [string]$PackageName = "mmiyaji.SpeakerHop",
     [string]$Publisher = "CN=663C5D03-791A-4B2C-8509-629FA1CA125A",
     [string]$PublisherDisplayName = "mmiyaji"

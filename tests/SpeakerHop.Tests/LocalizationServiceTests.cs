@@ -15,6 +15,41 @@ public sealed class LocalizationServiceTests
         Assert.Equal("language.system", first.ResourceKey);
     }
 
+    [Theory]
+    [InlineData(LocalizationService.SystemLanguage, "System", "System default")]
+    [InlineData(LocalizationService.Japanese, "日本語", "Japanese")]
+    [InlineData(LocalizationService.English, "English", "English")]
+    [InlineData(LocalizationService.ChineseSimplified, "简体中文", "Simplified Chinese")]
+    [InlineData(LocalizationService.ChineseTraditional, "繁體中文", "Traditional Chinese")]
+    [InlineData(LocalizationService.Korean, "한국어", "Korean")]
+    [InlineData(LocalizationService.German, "Deutsch", "German")]
+    [InlineData(LocalizationService.French, "Français", "French")]
+    [InlineData(LocalizationService.Spanish, "Español", "Spanish")]
+    public void LanguageDisplayName_AlwaysIncludesEnglishName(string code, string nativeName, string englishName)
+    {
+        var result = LocalizationService.LanguageDisplayName(code, LocalizationService.English);
+
+        Assert.Equal($"{nativeName} ({englishName})", result);
+    }
+
+    [Theory]
+    [InlineData("ja-JP")]
+    [InlineData("en-US")]
+    [InlineData("zh-CN")]
+    [InlineData("zh-TW")]
+    [InlineData("ko-KR")]
+    [InlineData("de-DE")]
+    [InlineData("fr-FR")]
+    [InlineData("es-ES")]
+    public void LanguageConfirmation_IncludesTheRequestedLanguage(string language)
+    {
+        var name = LocalizationService.LanguageDisplayName("de-DE", language);
+        var message = string.Format(LocalizationService.Text("settings.languageConfirmMessage", language), name);
+        Assert.Contains(name, message);
+        foreach (var key in new[] { "settings.languageConfirmTitle", "settings.languageConfirmChange" })
+            Assert.NotEqual(key, LocalizationService.Text(key, language));
+    }
+
     [Fact]
     public void Text_ReturnsConfiguredLanguageResourceCaseInsensitively()
     {

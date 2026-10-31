@@ -29,10 +29,42 @@ public static class LocalizationService
         new(Spanish, "language.spanish")
     ];
 
+    public static string LanguageDisplayName(string? code, string? currentLanguage = null)
+    {
+        var option = SupportedLanguages.FirstOrDefault(language =>
+            string.Equals(language.Code, code, StringComparison.OrdinalIgnoreCase));
+        if (option is null) return code ?? string.Empty;
+        var englishName = option.Code switch
+        {
+            SystemLanguage => "System default",
+            Japanese => "Japanese",
+            English => "English",
+            ChineseSimplified => "Simplified Chinese",
+            ChineseTraditional => "Traditional Chinese",
+            Korean => "Korean",
+            German => "German",
+            French => "French",
+            Spanish => "Spanish",
+            _ => option.Code
+        };
+        var nativeName = option.Code == SystemLanguage
+            ? Text(option.ResourceKey, currentLanguage)
+            : option.Code switch
+            {
+                Japanese => "日本語", English => "English", ChineseSimplified => "简体中文",
+                ChineseTraditional => "繁體中文", Korean => "한국어", German => "Deutsch",
+                French => "Français", Spanish => "Español", _ => englishName
+            };
+        return $"{nativeName} ({englishName})";
+    }
+
     private static readonly Dictionary<string, Dictionary<string, string>> Resources = new(StringComparer.OrdinalIgnoreCase)
     {
         [Japanese] = new(StringComparer.OrdinalIgnoreCase)
         {
+            ["settings.languageConfirmMessage"] = "アプリの表示言語を {0} に変更します。続行しますか？",
+            ["settings.languageConfirmChange"] = "変更",
+            ["settings.languageConfirmTitle"] = "表示言語を変更しますか？",
             ["shortcuts.enabledShort"] = "有効",
             ["about.copyrightNotice"] = "© 2026 mmiyaji. すべての権利を留保します。",
             ["common.close"] = "閉じる",
@@ -180,6 +212,9 @@ public static class LocalizationService
         },
         [English] = new(StringComparer.OrdinalIgnoreCase)
         {
+            ["settings.languageConfirmMessage"] = "Change the app display language to {0}?",
+            ["settings.languageConfirmChange"] = "Change",
+            ["settings.languageConfirmTitle"] = "Change display language?",
             ["shortcuts.enabledShort"] = "On",
             ["about.copyrightNotice"] = "© 2026 mmiyaji. All rights reserved.",
             ["common.close"] = "Close",
@@ -326,6 +361,9 @@ public static class LocalizationService
             ["device.missing"] = "Missing device"
         },
         [ChineseSimplified] = WithEnglishOverrides(
+            ("settings.languageConfirmMessage", "要将应用显示语言更改为 {0} 吗？"),
+            ("settings.languageConfirmChange", "更改"),
+            ("settings.languageConfirmTitle", "更改显示语言？"),
             ("shortcuts.enabledShort", "启用"),
             ("about.copyrightNotice", "© 2026 mmiyaji。保留所有权利。"),
             ("devices.switch", "切换"),
@@ -471,6 +509,9 @@ public static class LocalizationService
             ("about.exitApplicationDescription", "停止 SpeakerHop 并将其从任务栏托盘中移除。"),
             ("device.missing", "缺失的设备")),
         [ChineseTraditional] = WithEnglishOverrides(
+            ("settings.languageConfirmMessage", "要將應用程式顯示語言變更為 {0} 嗎？"),
+            ("settings.languageConfirmChange", "變更"),
+            ("settings.languageConfirmTitle", "要變更顯示語言嗎？"),
             ("shortcuts.enabledShort", "啟用"),
             ("about.copyrightNotice", "© 2026 mmiyaji。保留所有權利。"),
             ("devices.switch", "切換"),
@@ -616,6 +657,9 @@ public static class LocalizationService
             ("about.exitApplicationDescription", "停止 SpeakerHop 並將其從工作列托盤中移除。"),
             ("device.missing", "遺失的裝置")),
         [Korean] = WithEnglishOverrides(
+            ("settings.languageConfirmMessage", "앱 표시 언어를 {0}(으)로 변경할까요?"),
+            ("settings.languageConfirmChange", "변경"),
+            ("settings.languageConfirmTitle", "표시 언어를 변경할까요?"),
             ("shortcuts.enabledShort", "사용"),
             ("about.copyrightNotice", "© 2026 mmiyaji. 모든 권리 보유."),
             ("devices.switch", "전환"),
@@ -761,6 +805,9 @@ public static class LocalizationService
             ("about.exitApplicationDescription", "SpeakerHop을 중지하고 작업 표시줄 트레이에서 제거합니다."),
             ("device.missing", "누락된 장치")),
         [German] = WithEnglishOverrides(
+            ("settings.languageConfirmMessage", "Möchten Sie die Anzeigesprache der App zu {0} ändern?"),
+            ("settings.languageConfirmChange", "Ändern"),
+            ("settings.languageConfirmTitle", "Anzeigesprache ändern?"),
             ("shortcuts.enabledShort", "An"),
             ("about.copyrightNotice", "© 2026 mmiyaji. Alle Rechte vorbehalten."),
             ("devices.switch", "Wechseln"),
@@ -906,6 +953,9 @@ public static class LocalizationService
             ("about.exitApplicationDescription", "SpeakerHop stoppen und aus dem Infobereich entfernen."),
             ("device.missing", "Fehlendes Gerät")),
         [French] = WithEnglishOverrides(
+            ("settings.languageConfirmMessage", "Voulez-vous afficher l’application en {0} ?"),
+            ("settings.languageConfirmChange", "Changer"),
+            ("settings.languageConfirmTitle", "Changer la langue d’affichage ?"),
             ("shortcuts.enabledShort", "Actif"),
             ("about.copyrightNotice", "© 2026 mmiyaji. Tous droits réservés."),
             ("devices.switch", "Basculer"),
@@ -1051,6 +1101,9 @@ public static class LocalizationService
             ("about.exitApplicationDescription", "Arrêter SpeakerHop et le retirer de la zone de notification."),
             ("device.missing", "Appareil manquant")),
         [Spanish] = WithEnglishOverrides(
+            ("settings.languageConfirmMessage", "¿Quieres cambiar el idioma de la aplicación a {0}?"),
+            ("settings.languageConfirmChange", "Cambiar"),
+            ("settings.languageConfirmTitle", "¿Cambiar el idioma de la aplicación?"),
             ("shortcuts.enabledShort", "Act."),
             ("about.copyrightNotice", "© 2026 mmiyaji. Todos los derechos reservados."),
             ("devices.switch", "Cambiar"),
