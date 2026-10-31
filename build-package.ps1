@@ -48,7 +48,8 @@ if (-not $resolvedPublishRoot.StartsWith([IO.Path]::GetFullPath((Join-Path $root
     throw 'Unexpected publish path.'
 }
 Remove-Item -LiteralPath $resolvedPublishRoot -Recurse -Force -ErrorAction SilentlyContinue
-& $msbuild $project /restore /t:Publish /p:Configuration=$Configuration /p:Platform=$Platform /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=false /p:PublishDir="$publishRoot\" /p:Version=$Version /p:AssemblyVersion=$Version /p:FileVersion=$Version /p:InformationalVersion=$Version /m
+# Keep the generated PRI resource map aligned with the package identity.
+& $msbuild $project /restore /t:Publish /p:Configuration=$Configuration /p:Platform=$Platform /p:RuntimeIdentifier=win-x64 /p:SelfContained=true /p:WindowsAppSDKSelfContained=false /p:PublishDir="$publishRoot\" /p:Version=$Version /p:AssemblyVersion=$Version /p:FileVersion=$Version /p:InformationalVersion=$Version /p:ProjectPriIndexName=$PackageName /m
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # WinUI's generated PRI/XBF are build outputs, but are not automatically

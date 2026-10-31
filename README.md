@@ -1,16 +1,16 @@
 # SpeakerHop
 
-**1.1.0 release candidate** (app/MSIX: `1.1.0.0`)
+**Version 1.1.0** (app/MSIX: `1.1.0.0`)
 
 [Release preparation](docs/releases/1.1.0.md) · [Changelog](CHANGELOG.md) · [Installation guide](docs/releases/INSTALL.md)
 
 WinUI 3 desktop app for switching the Windows default audio output device from the tray icon or global shortcuts.
 
-![SpeakerHop overview with actual app screenshot](docs/images/speakerhop-readme-overview.png)
+![SpeakerHop 1.1.0 Devices page](docs/store-assets/en-store-screenshot-01-devices.png)
 
 SpeakerHop is a small Windows tray utility for people who frequently move audio between speakers, headphones, monitors, TVs, and virtual devices. Choose the output devices that should be part of the cycle, then switch between them from the tray icon or a global shortcut without opening Windows settings.
 
-The README image uses an actual light-theme English SpeakerHop screenshot embedded in a generated presentation background. The Devices page lets you select which active render endpoints are included in the switching cycle. Disconnected or unused outputs can stay out of the rotation, while notifications confirm each successful switch.
+The image above shows the English Devices page in SpeakerHop 1.1.0. The Devices page lets you select which active render endpoints are included in the switching cycle. Disconnected or unused outputs can stay out of the rotation, while notifications confirm each successful switch.
 
 ## Features
 
@@ -56,7 +56,7 @@ The unsigned package is written to `artifacts\SpeakerHop_<version>_x64.msix`. Fo
 
 ## Local release installation
 
-The planned release assets are a development ZIP and an unsigned MSIX for signing or Store submission. The unsigned MSIX is not a directly installable, trusted production installer. As checked on November 1, 2026, GitHub lists 1.0.26.0 as its latest release; 1.1.0 publication and asset availability are pending.
+Release assets include a development ZIP and an unsigned MSIX for signing or Store submission. The unsigned MSIX is not a directly installable, trusted production installer. See [GitHub releases](https://github.com/mmiyaji/SpeakerHop/releases) for published downloads. Microsoft Store submission and availability are tracked separately in the [Store submission notes](docs/releases/store-1.1.0.md).
 
 For the development ZIP, enable Windows Developer Mode and install Windows App Runtime 1.7 (x64). Extract the ZIP and run:
 
