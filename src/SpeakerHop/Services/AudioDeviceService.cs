@@ -71,6 +71,15 @@ public sealed class AudioDeviceService : IAudioDeviceService
         return endpoint.Mute;
     }
 
+    public bool ToggleDefaultMicrophoneMute()
+    {
+        using var enumerator = new MMDeviceEnumerator();
+        using var device = enumerator.GetDefaultAudioEndpoint(DataFlow.Capture, Role.Multimedia);
+        var endpoint = device.AudioEndpointVolume;
+        endpoint.Mute = !endpoint.Mute;
+        return endpoint.Mute;
+    }
+
     [ComImport]
     [Guid("870AF99C-171D-4F9E-AF0D-E63DF40C2BC9")]
     private sealed class PolicyConfigClient;

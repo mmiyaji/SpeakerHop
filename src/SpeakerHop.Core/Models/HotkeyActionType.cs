@@ -6,5 +6,6 @@ public enum HotkeyActionType
     SetDevice,
     VolumeUp,
     VolumeDown,
-    MuteToggle
+    MuteToggle = 4,
+    MicrophoneMuteToggle = 5
 }

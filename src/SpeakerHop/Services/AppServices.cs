@@ -9,6 +9,14 @@ public static class AppServices
     public static TrayIconService Tray { get; private set; } = null!;
     public static HotkeyService Hotkeys { get; private set; } = null!;
     public static AudioCommandService Commands { get; private set; } = null!;
+    public static IReadOnlyList<HotkeyRegistrationFailure> StartupHotkeyFailures { get; private set; } = [];
+
+    public static void SetStartupHotkeyFailures(IReadOnlyList<HotkeyRegistrationFailure> failures)
+    {
+        StartupHotkeyFailures = failures;
+        if (failures.Count > 0)
+            Tray?.ShowStartupHotkeyFailures(failures);
+    }
 
     public static void Initialize(MainWindow window, bool loadSettings = true)
     {
@@ -21,7 +29,12 @@ public static class AppServices
         Commands = new AudioCommandService(Audio, Settings);
         Tray = new TrayIconService(window, Commands);
         Hotkeys = new HotkeyService(Commands, Settings);
-        Hotkeys.RegisterConfiguredHotkeys();
+        StartupHotkeyFailures = Hotkeys.RegisterConfiguredHotkeys();
+        if (StartupHotkeyFailures.Count > 0)
+        {
+            window.ShowStartupHotkeyFailures(StartupHotkeyFailures);
+            Tray.ShowStartupHotkeyFailures(StartupHotkeyFailures);
+        }
     }
 
     public static void ExitApplication()

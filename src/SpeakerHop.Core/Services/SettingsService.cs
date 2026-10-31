@@ -8,6 +8,7 @@ public sealed class SettingsService
 {
     private readonly string _settingsPath;
     private readonly JsonSerializerOptions _serializerOptions = new() { WriteIndented = true };
+    private bool _protectExistingFile;
 
     public SettingsService()
         : this(DefaultSettingsPath())
@@ -21,48 +22,83 @@ public sealed class SettingsService
             throw new ArgumentException("Settings path must not be empty.", nameof(settingsPath));
         }
 
-        var directory = Path.GetDirectoryName(settingsPath);
-        if (!string.IsNullOrWhiteSpace(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
         _settingsPath = Path.GetFullPath(settingsPath);
     }
 
     public AppSettings Current { get; private set; } = new();
 
+    /// <summary>True when a read/backup failure means the existing settings file must be preserved.</summary>
+    public bool IsReadOnlyDueToLoadFailure => _protectExistingFile;
+
+    /// <summary>Most recent persistence failure, if any.</summary>
+    public string? PersistenceError { get; private set; }
+
+    /// <summary>Whether initial launch completion was successfully written to disk.</summary>
+    public bool InitialLaunchCompletionPersisted { get; private set; }
+
     public void Load()
     {
-        if (!File.Exists(_settingsPath))
-        {
-            TrySave();
-            return;
-        }
-
         try
         {
             var json = File.ReadAllText(_settingsPath);
             Current = Normalize(JsonSerializer.Deserialize<AppSettings>(json));
+            _protectExistingFile = false;
+            PersistenceError = null;
+            InitialLaunchCompletionPersisted = Current.InitialLaunchCompleted;
         }
         catch (JsonException)
         {
-            BackupInvalidSettings();
+            if (!BackupInvalidSettings())
+            {
+                _protectExistingFile = true;
+                PersistenceError ??= "Invalid settings could not be backed up; the existing file is protected.";
+                Current = new AppSettings();
+                InitialLaunchCompletionPersisted = false;
+                return;
+            }
+            _protectExistingFile = false;
+            Current = new AppSettings();
+            InitialLaunchCompletionPersisted = false;
+            TrySave();
+        }
+        catch (FileNotFoundException)
+        {
+            _protectExistingFile = false;
+            PersistenceError = null;
+            InitialLaunchCompletionPersisted = false;
+            Current = new AppSettings();
+            TrySave();
+        }
+        catch (DirectoryNotFoundException)
+        {
+            _protectExistingFile = false;
+            PersistenceError = null;
+            InitialLaunchCompletionPersisted = false;
             Current = new AppSettings();
             TrySave();
         }
         catch (IOException)
         {
             Current = new AppSettings();
+            InitialLaunchCompletionPersisted = false;
+            _protectExistingFile = true;
+            PersistenceError = "Settings could not be read; saving is disabled until settings are loaded successfully.";
         }
         catch (UnauthorizedAccessException)
         {
             Current = new AppSettings();
+            InitialLaunchCompletionPersisted = false;
+            _protectExistingFile = true;
+            PersistenceError = "Settings could not be read; saving is disabled until settings are loaded successfully.";
         }
     }
 
     public void Save()
     {
+        if (_protectExistingFile)
+        {
+            throw new InvalidOperationException("Settings could not be read or backed up. Load settings successfully before saving.");
+        }
         Current = Normalize(Current);
         var directory = Path.GetDirectoryName(_settingsPath)!;
         Directory.CreateDirectory(directory);
@@ -82,6 +118,8 @@ public sealed class SettingsService
             }
 
             File.Move(temporaryPath, _settingsPath, overwrite: true);
+            PersistenceError = null;
+            InitialLaunchCompletionPersisted = Current.InitialLaunchCompleted;
         }
         finally
         {
@@ -92,18 +130,21 @@ public sealed class SettingsService
         }
     }
 
-    private void BackupInvalidSettings()
+    private bool BackupInvalidSettings()
     {
         var backupPath = $"{_settingsPath}.{DateTimeOffset.Now:yyyyMMddHHmmss}.invalid";
         try
         {
             File.Move(_settingsPath, backupPath, overwrite: true);
+            return true;
         }
         catch (IOException)
         {
+            return false;
         }
         catch (UnauthorizedAccessException)
         {
+            return false;
         }
     }
 
@@ -115,9 +156,11 @@ public sealed class SettingsService
         }
         catch (IOException)
         {
+            PersistenceError = "Settings could not be saved.";
         }
         catch (UnauthorizedAccessException)
         {
+            PersistenceError = "Settings could not be saved.";
         }
     }
 
@@ -186,7 +229,28 @@ public sealed class SettingsService
         }
 
         Current.InitialLaunchCompleted = true;
-        Save();
+        try
+        {
+            Save();
+        }
+        catch (IOException exception)
+        {
+            Current.InitialLaunchCompleted = false;
+            InitialLaunchCompletionPersisted = false;
+            PersistenceError = exception.Message;
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            Current.InitialLaunchCompleted = false;
+            InitialLaunchCompletionPersisted = false;
+            PersistenceError = exception.Message;
+        }
+        catch (InvalidOperationException exception)
+        {
+            Current.InitialLaunchCompleted = false;
+            InitialLaunchCompletionPersisted = false;
+            PersistenceError = exception.Message;
+        }
     }
 
     private static string DefaultSettingsPath()

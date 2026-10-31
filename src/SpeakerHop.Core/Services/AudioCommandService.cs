@@ -133,6 +133,19 @@ public sealed class AudioCommandService
         }
     }
 
+    public void ToggleMicrophoneMute()
+    {
+        try
+        {
+            var muted = _audio.ToggleDefaultMicrophoneMute();
+            Notify(muted ? T("audio.microphoneMuted") : T("audio.microphoneUnmuted"));
+        }
+        catch (Exception ex)
+        {
+            Notify(string.Format(T("audio.microphoneMuteToggleFailed"), ex.Message));
+        }
+    }
+
     public void Apply(HotkeyDefinition hotkey)
     {
         switch (hotkey.Action)
@@ -151,6 +164,9 @@ public sealed class AudioCommandService
                 break;
             case HotkeyActionType.MuteToggle:
                 ToggleMute();
+                break;
+            case HotkeyActionType.MicrophoneMuteToggle:
+                ToggleMicrophoneMute();
                 break;
         }
     }

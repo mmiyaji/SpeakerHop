@@ -21,6 +21,18 @@ public sealed class SettingsServiceTests
     }
 
     [Fact]
+    public void Constructor_WhenParentPathIsBlocked_DoesNotThrow()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var blockedParent = Path.Combine(directory.Path, "not-a-directory");
+        File.WriteAllText(blockedParent, "file");
+
+        var service = new SettingsService(Path.Combine(blockedParent, "settings.json"));
+
+        Assert.NotNull(service.Current);
+    }
+
+    [Fact]
     public void Load_WhenFileDoesNotExist_CreatesDefaultSettingsFile()
     {
         using var directory = TemporaryDirectory.Create();
@@ -51,6 +63,27 @@ public sealed class SettingsServiceTests
         Assert.Equal(LocalizationService.English, loaded.Current.Language);
         Assert.Equal("dark", loaded.Current.Theme);
         Assert.Equal(["speaker", "headphones"], loaded.Current.CycleDeviceIds);
+    }
+
+    [Fact]
+    public void Load_PreservesExistingSpeakerMuteValueAndNewMicrophoneMuteValue()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var path = Path.Combine(directory.Path, "settings.json");
+        File.WriteAllText(path, """
+            {
+              "Hotkeys": [
+                { "Id": "00000000-0000-0000-0000-000000000001", "Name": "Speaker", "Action": 4, "Modifiers": 0, "Key": 65, "VolumeStep": 5 },
+                { "Id": "00000000-0000-0000-0000-000000000002", "Name": "Microphone", "Action": 5, "Modifiers": 0, "Key": 66, "VolumeStep": 5 }
+              ]
+            }
+            """);
+        var service = new SettingsService(path);
+
+        service.Load();
+
+        Assert.Equal([HotkeyActionType.MuteToggle, HotkeyActionType.MicrophoneMuteToggle],
+            service.Current.Hotkeys.Select(hotkey => hotkey.Action));
     }
 
     [Fact]
@@ -133,6 +166,33 @@ public sealed class SettingsServiceTests
         service.Load();
 
         Assert.Equal("system", service.Current.Language);
+        Assert.True(service.IsReadOnlyDueToLoadFailure);
+        locked.Dispose();
+        var exception = Record.Exception(service.Save);
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Equal("{\"Language\":\"en-US\"}", File.ReadAllText(path));
+        service.Load();
+        Assert.False(service.IsReadOnlyDueToLoadFailure);
+        service.Current.Language = LocalizationService.Japanese;
+        service.Save();
+        Assert.Contains("ja-JP", File.ReadAllText(path));
+    }
+
+    [Fact]
+    public void Load_WhenReadFails_ResetsPersistedCompletionStatus()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var path = Path.Combine(directory.Path, "settings.json");
+        File.WriteAllText(path, "{\"InitialLaunchCompleted\":true}");
+        var service = new SettingsService(path);
+        service.Load();
+        Assert.True(service.InitialLaunchCompletionPersisted);
+        using var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        service.Load();
+
+        Assert.False(service.InitialLaunchCompletionPersisted);
+        Assert.True(service.IsReadOnlyDueToLoadFailure);
     }
 
     [Fact]
@@ -179,6 +239,43 @@ public sealed class SettingsServiceTests
         service.MarkInitialLaunchCompleted();
 
         Assert.False(File.Exists(path));
+    }
+
+    [Fact]
+    public void MarkInitialLaunchCompleted_WhenSaveFails_DoesNotClaimCompletionOrThrow()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var path = Path.Combine(directory.Path, "settings.json");
+        File.WriteAllText(path, "{\"Language\":\"en-US\"}");
+        var service = new SettingsService(path);
+        service.Load();
+        using var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        service.MarkInitialLaunchCompleted();
+
+        Assert.False(service.Current.InitialLaunchCompleted);
+        Assert.False(service.InitialLaunchCompletionPersisted);
+        Assert.False(string.IsNullOrWhiteSpace(service.PersistenceError));
+    }
+
+    [Fact]
+    public void Load_WhenInvalidFileCannotBeBackedUp_ProtectsOriginalFromSave()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var path = Path.Combine(directory.Path, "settings.json");
+        const string original = "{ invalid json";
+        File.WriteAllText(path, original);
+        // Allow reading the malformed JSON but deny the delete sharing required
+        // for File.Move, so backup failure is deterministic without clock timing.
+        using var readLock = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var service = new SettingsService(path);
+
+        service.Load();
+        var exception = Record.Exception(service.Save);
+
+        Assert.True(service.IsReadOnlyDueToLoadFailure);
+        Assert.IsType<InvalidOperationException>(exception);
+        Assert.Equal(original, File.ReadAllText(path));
     }
 
     private sealed class TemporaryDirectory : IDisposable

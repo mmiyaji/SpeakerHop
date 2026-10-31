@@ -325,7 +325,7 @@ public sealed class AudioCommandServiceTests
         service.ToggleMute();
         service.ToggleMute();
 
-        Assert.Equal(["Muted", "Unmuted"], notifications.Select(notification => notification.Message));
+        Assert.Equal(["Speakers muted", "Speakers unmuted"], notifications.Select(notification => notification.Message));
     }
 
     [Fact]
@@ -340,7 +340,38 @@ public sealed class AudioCommandServiceTests
 
         service.ToggleMute();
 
-        Assert.Equal("Could not toggle mute: no endpoint", Assert.Single(notifications).Message);
+        Assert.Equal("Could not toggle speaker mute: no endpoint", Assert.Single(notifications).Message);
+    }
+
+    [Fact]
+    public void ToggleMicrophoneMute_ReportsMutedAndUnmutedStates()
+    {
+        var audio = new FakeAudioDeviceService { ToggleDefaultMicrophoneMuteResults = new Queue<bool>([true, false]) };
+        var service = CreateService(audio, EnglishSettings());
+        var notifications = CaptureNotifications(service);
+
+        service.ToggleMicrophoneMute();
+        service.ToggleMicrophoneMute();
+
+        Assert.Equal(["Microphone muted", "Microphone unmuted"], notifications.Select(notification => notification.Message));
+        Assert.Equal(2, audio.ToggleDefaultMicrophoneMuteCallCount);
+        Assert.Equal(0, audio.ToggleDefaultMuteCallCount);
+    }
+
+    [Fact]
+    public void ToggleMicrophoneMute_WhenAudioThrows_NotifiesFailure()
+    {
+        var audio = new FakeAudioDeviceService
+        {
+            ToggleDefaultMicrophoneMuteException = new InvalidOperationException("no microphone")
+        };
+        var service = CreateService(audio, EnglishSettings());
+        var notifications = CaptureNotifications(service);
+
+        service.ToggleMicrophoneMute();
+
+        Assert.Equal("Could not toggle microphone mute: no microphone", Assert.Single(notifications).Message);
+        Assert.Equal(0, audio.ToggleDefaultMuteCallCount);
     }
 
     [Fact]
@@ -360,11 +391,13 @@ public sealed class AudioCommandServiceTests
         service.Apply(new HotkeyDefinition { Action = HotkeyActionType.VolumeUp, VolumeStep = -7 });
         service.Apply(new HotkeyDefinition { Action = HotkeyActionType.VolumeDown, VolumeStep = -8 });
         service.Apply(new HotkeyDefinition { Action = HotkeyActionType.MuteToggle });
+        service.Apply(new HotkeyDefinition { Action = HotkeyActionType.MicrophoneMuteToggle });
         service.Apply(new HotkeyDefinition { Action = (HotkeyActionType)999 });
 
         Assert.Equal(["a", "b"], audio.SetDefaultRenderDeviceCalls);
         Assert.Equal([7, -8], audio.ChangeDefaultVolumeCalls);
         Assert.Equal(1, audio.ToggleDefaultMuteCallCount);
+        Assert.Equal(1, audio.ToggleDefaultMicrophoneMuteCallCount);
     }
 
     private static AudioCommandService CreateService(
@@ -421,13 +454,16 @@ public sealed class AudioCommandServiceTests
         public Exception? SetDefaultRenderDeviceException { get; init; }
         public Exception? ChangeDefaultVolumeException { get; init; }
         public Exception? ToggleDefaultMuteException { get; init; }
+        public Exception? ToggleDefaultMicrophoneMuteException { get; init; }
         public float VolumeResult { get; init; } = 0.5f;
         public Queue<bool> ToggleDefaultMuteResults { get; init; } = new([true]);
+        public Queue<bool> ToggleDefaultMicrophoneMuteResults { get; init; } = new([true]);
         public bool ReorderDefaultFirst { get; init; }
         public bool UpdateDefaultOnSet { get; init; }
         public List<string> SetDefaultRenderDeviceCalls { get; } = [];
         public List<int> ChangeDefaultVolumeCalls { get; } = [];
         public int ToggleDefaultMuteCallCount { get; private set; }
+        public int ToggleDefaultMicrophoneMuteCallCount { get; private set; }
 
         public IReadOnlyList<AudioDeviceInfo> GetRenderDevices()
         {
@@ -483,6 +519,17 @@ public sealed class AudioCommandServiceTests
 
             ToggleDefaultMuteCallCount++;
             return ToggleDefaultMuteResults.Count == 0 || ToggleDefaultMuteResults.Dequeue();
+        }
+
+        public bool ToggleDefaultMicrophoneMute()
+        {
+            if (ToggleDefaultMicrophoneMuteException is not null)
+            {
+                throw ToggleDefaultMicrophoneMuteException;
+            }
+
+            ToggleDefaultMicrophoneMuteCallCount++;
+            return ToggleDefaultMicrophoneMuteResults.Count == 0 || ToggleDefaultMicrophoneMuteResults.Dequeue();
         }
     }
 

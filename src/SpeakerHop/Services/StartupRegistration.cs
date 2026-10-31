@@ -82,7 +82,7 @@ public static class StartupRegistration
                     return StartupRegistrationResult.Unsupported;
                 }
 
-                key.SetValue(ValueName, $"\"{path}\"");
+                key.SetValue(ValueName, $"\"{path}\" --startup");
                 return GetRegistryStartupEnabled() == true
                     ? StartupRegistrationResult.Enabled
                     : StartupRegistrationResult.Unsupported;

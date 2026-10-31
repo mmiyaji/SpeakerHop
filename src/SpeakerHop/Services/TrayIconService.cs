@@ -39,6 +39,25 @@ public sealed class TrayIconService : IDisposable
         _notifyIcon.Dispose();
     }
 
+    public void ShowPersistenceError(string? error)
+    {
+        if (string.IsNullOrWhiteSpace(error)) return;
+        ShowBalloon(string.Format(T("settings.persistenceError"), error));
+    }
+
+    public void ShowStartupHotkeyFailures(IReadOnlyList<HotkeyRegistrationFailure> failures)
+    {
+        if (failures.Count == 0) return;
+        ShowBalloon(string.Format(T("shortcuts.startupRegistrationFailed"), failures.Count));
+    }
+
+    private void ShowBalloon(string message)
+    {
+        _notifyIcon.BalloonTipTitle = "SpeakerHop";
+        _notifyIcon.BalloonTipText = message;
+        _notifyIcon.ShowBalloonTip(2500);
+    }
+
     private ContextMenuStrip BuildMenu()
     {
         var menu = new ContextMenuStrip();

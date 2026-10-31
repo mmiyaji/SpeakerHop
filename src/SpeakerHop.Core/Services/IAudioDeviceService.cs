@@ -8,4 +8,5 @@ public interface IAudioDeviceService
     void SetDefaultRenderDevice(string deviceId);
     float ChangeDefaultVolume(int deltaPercent);
     bool ToggleDefaultMute();
+    bool ToggleDefaultMicrophoneMute();
 }

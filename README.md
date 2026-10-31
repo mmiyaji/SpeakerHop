@@ -13,7 +13,10 @@ The README image uses an actual light-theme English SpeakerHop screenshot embedd
 - Left-navigation WinUI 3 settings window.
 - Tray icon left-click cycles through selected output devices.
 - Device settings page controls which render endpoints are included in the cycle.
-- Global shortcuts can cycle, switch to a fixed device, change volume, or toggle mute.
+- Global shortcuts can cycle, switch to a fixed device, change volume, toggle mute for the current default output device, or toggle mute for the Windows default capture endpoint.
+- The shortcut editor lists every action with its key binding, enabled state, and relevant target or volume-step setting. Unassigned actions remain visible, and each action supports multiple bindings.
+
+The existing **MuteToggle** action continues to mute the default output device. **MicrophoneMuteToggle** mutes the default capture endpoint for the Multimedia role; it does not change or use a separately assigned Communications default device. Adding the microphone action does not assign it a shortcut automatically.
 - MSIX manifest and packaging script are included for Microsoft Store preparation.
 
 ## Build
@@ -47,10 +50,19 @@ For the development ZIP, enable Windows Developer Mode and install Windows App R
 The installer copies the package to a stable folder under LocalAppData, registers it without removing settings, and launches it. If package registration is unavailable under your user profile, choose a writable local folder outside the checkout:
 
 ```powershell
-.\install-local.ps1 -InstallDirectory D:\Apps\SpeakerHop\1.0.26.0
+.\install-local.ps1 -InstallDirectory D:\Apps\SpeakerHop\1.0.29.0
 ```
 
 Do not move or delete the installed folder. The app shows its main window on the first launch; subsequent launches respect **Show main window on startup**. When that setting is off, open settings from the tray icon's context menu.
+
+Updates are staged and validated before the running app is stopped. An existing install folder is preserved; the installer selects a fresh sibling folder when the requested destination already exists. If registration fails, it attempts to restore the previous registration and restart the previous app. Any folder still used by a package registration is retained.
+
+To run the unit tests and the installer transaction tests (the latter uses mocks and does not alter the installed app):
+
+```powershell
+dotnet test tests\SpeakerHop.Tests\SpeakerHop.Tests.csproj
+.\tests\install-local.transaction.tests.ps1
+```
 
 ## Store review note
 

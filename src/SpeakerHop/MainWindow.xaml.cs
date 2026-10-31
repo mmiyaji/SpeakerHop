@@ -62,12 +62,17 @@ public sealed class MainWindow : Window
     private List<HotkeyDefinition>? _hotkeyDraft;
     private int _automationSequence;
     private int _layoutMode = -1;
+    private ContentDialog? _captureDialog;
+    private bool _captureCancelled;
 
     [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(IntPtr hWnd);
 
     [DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(int virtualKey);
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
 
     private delegate IntPtr LowLevelKeyboardProc(int code, IntPtr wParam, IntPtr lParam);
 
@@ -91,7 +96,36 @@ public sealed class MainWindow : Window
         Title = "SpeakerHop";
         BuildShell();
         ConfigureWindow();
+        Activated += (_, args) =>
+        {
+            if (args.WindowActivationState == WindowActivationState.Deactivated && _captureDialog is not null)
+            {
+                _captureCancelled = true;
+                _captureDialog.Hide();
+            }
+        };
         _root.SizeChanged += (_, _) => UpdateResponsiveLayout();
+    }
+
+    public void ShowPersistenceError(string? error)
+    {
+        if (!string.IsNullOrWhiteSpace(error))
+            SetStatus(string.Format(T("settings.persistenceError"), error));
+    }
+
+    public void ShowStartupHotkeyFailures(IReadOnlyList<HotkeyRegistrationFailure> failures)
+    {
+        if (failures.Count > 0)
+            SetStatus(string.Format(T("shortcuts.registrationFailureDetails"), failures.Count,
+                string.Join(", ", failures.Select(HotkeyFailureText))));
+    }
+
+    private void RestoreStartupHotkeyStatus()
+    {
+        if (AppServices.Settings.PersistenceError is { } error)
+            ShowPersistenceError(error);
+        else if (AppServices.StartupHotkeyFailures.Count > 0)
+            ShowStartupHotkeyFailures(AppServices.StartupHotkeyFailures);
     }
 
     public void ShowSettings()
@@ -122,7 +156,7 @@ public sealed class MainWindow : Window
         SetTitleBar(_titleBar);
 
         _contentScroll.Content = _content;
-        _contentScroll.Padding = new Thickness(32, 28, 32, 32);
+        _contentScroll.Padding = new Thickness(20, 16, 20, 20);
         AddFallbackWinUiResources(_contentScroll.Resources);
 
         _navigation.Background = PageBrush;
@@ -131,7 +165,9 @@ public sealed class MainWindow : Window
         _navigation.IsSettingsVisible = false;
         _navigation.IsBackButtonVisible = NavigationViewBackButtonVisible.Collapsed;
         _navigation.PaneDisplayMode = NavigationViewPaneDisplayMode.Auto;
-        _navigation.CompactModeThresholdWidth = 720;
+        // Keep the icon rail visible on narrow desktop windows. Minimal mode
+        // overlays the pane toggle on this page's own heading.
+        _navigation.CompactModeThresholdWidth = 0;
         _navigation.ExpandedModeThresholdWidth = 1000;
         _navigation.OpenPaneLength = 220;
         _navigation.CompactPaneLength = 48;
@@ -268,9 +304,9 @@ public sealed class MainWindow : Window
         _layoutMode = mode;
         _contentScroll.Padding = mode switch
         {
-            0 => new Thickness(32, 28, 32, 32),
-            1 => new Thickness(20, 22, 20, 24),
-            _ => new Thickness(14, 18, 14, 20)
+            0 => new Thickness(20, 16, 20, 20),
+            1 => new Thickness(16, 14, 16, 16),
+            _ => new Thickness(12, 12, 12, 14)
         };
 
         if (_content.Children.Count != 0)
@@ -384,7 +420,8 @@ public sealed class MainWindow : Window
         _content.Children.Clear();
         AddHeader(T("devices.title"), T("devices.subtitle"));
         _content.Children.Add(_status);
-        _content.Children.Add(NotificationOptionCard());
+        RestoreStartupHotkeyStatus();
+        _content.Children.Add(NotificationOptionRow());
 
         foreach (var device in _devices)
         {
@@ -400,7 +437,7 @@ public sealed class MainWindow : Window
             })));
     }
 
-    private UIElement NotificationOptionCard()
+    private UIElement NotificationOptionRow()
     {
         var panel = new Grid { ColumnSpacing = 12 };
         panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -408,7 +445,7 @@ public sealed class MainWindow : Window
 
         var text = new StackPanel { Spacing = 4 };
         text.Children.Add(TextBlock(T("devices.notification"), 16, TextBrush));
-        text.Children.Add(TextBlock(T("devices.notificationDescription"), 13, SecondaryTextBrush));
+        text.Children.Add(TextBlock(T("devices.notificationDescription"), 12, SecondaryTextBrush));
 
         var toggle = new ToggleSwitch
         {
@@ -421,20 +458,32 @@ public sealed class MainWindow : Window
         };
         AddFallbackWinUiResources(toggle.Resources);
         SetAutomation(toggle, "Devices.Notifications", T("devices.notification"));
+        var suppressChange = false;
         toggle.Toggled += (_, _) =>
         {
-            AppServices.Settings.Current.NotifyOnDeviceSwitch = toggle.IsOn;
-            AppServices.Settings.Save();
-            SetStatus(AppServices.Settings.Current.NotifyOnDeviceSwitch
-                ? T("devices.notificationsEnabled")
-                : T("devices.notificationsDisabled"));
+            if (suppressChange) return;
+            var previous = AppServices.Settings.Current.NotifyOnDeviceSwitch;
+            try
+            {
+                AppServices.Settings.Current.NotifyOnDeviceSwitch = toggle.IsOn;
+                AppServices.Settings.Save();
+                SetStatus(toggle.IsOn ? T("devices.notificationsEnabled") : T("devices.notificationsDisabled"));
+            }
+            catch (Exception ex)
+            {
+                AppServices.Settings.Current.NotifyOnDeviceSwitch = previous;
+                suppressChange = true;
+                toggle.IsOn = previous;
+                suppressChange = false;
+                ShowPersistenceError(ex.Message);
+            }
         };
 
         Grid.SetColumn(text, 0);
         Grid.SetColumn(toggle, 1);
         panel.Children.Add(text);
         panel.Children.Add(toggle);
-        return Card(panel);
+        return CompactRow(panel);
     }
 
     private void LoadDeviceSelections()
@@ -466,6 +515,8 @@ public sealed class MainWindow : Window
         var checkBox = new CheckBox
         {
             IsChecked = selected,
+            MinWidth = 0,
+            Width = 32,
             VerticalAlignment = VerticalAlignment.Center
         };
         SetAutomation(checkBox, $"Devices.Include.{device.Id}",
@@ -512,15 +563,15 @@ public sealed class MainWindow : Window
 
         var switchButton = new Button
         {
-            Content = T("action.setDevice"),
+            Content = T("devices.switch"),
             IsEnabled = device.IsConnected && !device.IsDefault,
-            MinWidth = 112,
+            MinWidth = 64,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center
         };
         AddFallbackWinUiResources(switchButton.Resources);
         SetAutomation(switchButton, $"Devices.Switch.{device.Id}",
-            $"{T("action.setDevice")}: {device.Name}");
+            $"{T("devices.switch")}: {device.Name}");
         switchButton.Click += (_, _) => SwitchToDevice(device);
 
         var assignedHotkey = AppServices.Settings.Current.Hotkeys.FirstOrDefault(hotkey =>
@@ -585,7 +636,7 @@ public sealed class MainWindow : Window
         checkBox.Checked += (_, _) => UpdateDeviceSelection(device.Id, true);
         checkBox.Unchecked += (_, _) => UpdateDeviceSelection(device.Id, false);
 
-        return Card(row);
+        return CompactRow(row);
     }
 
     private void SwitchToDevice(AudioDeviceInfo device)
@@ -633,7 +684,10 @@ public sealed class MainWindow : Window
             return;
         }
 
-        var failures = AppServices.Hotkeys.SaveAndReload(proposed);
+        IReadOnlyList<HotkeyRegistrationFailure> failures;
+        try { failures = AppServices.Hotkeys.SaveAndReload(proposed); }
+        catch (Exception ex) { ShowPersistenceError(ex.Message); return; }
+        AppServices.SetStartupHotkeyFailures(failures);
         if (failures.Count != 0)
         {
             SetStatus(string.Format(T("shortcuts.registrationFailed"), failures.Count,
@@ -641,8 +695,11 @@ public sealed class MainWindow : Window
             return;
         }
 
-        _hotkeyDraft = AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
-        _hasUnsavedHotkeyChanges = false;
+        if (!_hasUnsavedHotkeyChanges)
+        {
+            _hotkeyDraft = ShortcutDraftService.CreateRows(AppServices.Settings.Current.Hotkeys);
+            _hasUnsavedHotkeyChanges = false;
+        }
         ShowDevicesPage();
         SetStatus(T("shortcuts.saved"));
     }
@@ -666,6 +723,7 @@ public sealed class MainWindow : Window
 
     private void SaveDeviceSelections()
     {
+        var previous = AppServices.Settings.Current.CycleDeviceIds.ToList();
         var currentDeviceIds = _devices
             .Select(device => device.Id)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -680,17 +738,28 @@ public sealed class MainWindow : Window
             .Where(id => selectedCurrentIds.Contains(id))
             .Where(id => !AppServices.Settings.Current.CycleDeviceIds.Contains(id, StringComparer.OrdinalIgnoreCase));
 
-        AppServices.Settings.Current.CycleDeviceIds = preservedOrder
-            .Concat(newlySelected)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-        AppServices.Settings.Save();
-        SetStatus(T("devices.saved"));
+        try
+        {
+            AppServices.Settings.Current.CycleDeviceIds = preservedOrder
+                .Concat(newlySelected)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            AppServices.Settings.Save();
+            SetStatus(T("devices.saved"));
+        }
+        catch (Exception ex)
+        {
+            AppServices.Settings.Current.CycleDeviceIds = previous;
+            foreach (var device in _devices)
+                _cycleSelection[device.Id] = previous.Contains(device.Id, StringComparer.OrdinalIgnoreCase);
+            ShowDevicesPage();
+            ShowPersistenceError(ex.Message);
+        }
     }
 
     private void ShowShortcutsPage()
     {
-        _hotkeyDraft ??= AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
+        _hotkeyDraft ??= ShortcutDraftService.CreateRows(AppServices.Settings.Current.Hotkeys);
         _content.Children.Clear();
         AddHeader(T("shortcuts.title"), T("shortcuts.subtitle"));
         if (_hasUnsavedHotkeyChanges)
@@ -698,106 +767,179 @@ public sealed class MainWindow : Window
             SetStatus(T("shortcuts.unsaved"));
         }
         _content.Children.Add(_status);
+        RestoreStartupHotkeyStatus();
+        var saveButton = InlineButton(T("shortcuts.save"), SaveHotkeys, "Shortcuts.Save", T("shortcuts.save"));
+        var saveBar = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right,
+            Margin = new Thickness(0, 0, 0, 6), Children = { saveButton } };
+        _content.Children.Add(saveBar);
 
-        foreach (var hotkey in _hotkeyDraft)
+        var header = new Grid { ColumnSpacing = 8, Margin = new Thickness(8, 0, 8, 4) };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(68) });
+        header.Children.Add(TextBlock(T("shortcuts.enabled"), 12, SecondaryTextBrush));
+        var actionHeading = TextBlock(T("shortcuts.actionLabel"), 12, SecondaryTextBrush);
+        Grid.SetColumn(actionHeading, 1);
+        header.Children.Add(actionHeading);
+        var keyHeading = TextBlock(T("shortcuts.keyLabel"), 12, SecondaryTextBrush);
+        Grid.SetColumn(keyHeading, 2);
+        header.Children.Add(keyHeading);
+        var settingHeading = TextBlock(T("shortcuts.configuration"), 12, SecondaryTextBrush);
+        Grid.SetColumn(settingHeading, 3);
+        header.Children.Add(settingHeading);
+        if (CurrentLayoutMode() != 2)
+            _content.Children.Add(header);
+
+        foreach (var action in Enum.GetValues<HotkeyActionType>())
         {
-            _content.Children.Add(HotkeyRow(hotkey));
+            var rows = _hotkeyDraft.Where(hotkey => hotkey.Action == action).ToList();
+            var group = new StackPanel { Spacing = 3, Margin = new Thickness(0, 0, 0, 8) };
+            foreach (var hotkey in rows)
+                group.Children.Add(HotkeyRow(hotkey, rows, ReferenceEquals(hotkey, rows[0])));
+            _content.Children.Add(group);
         }
 
-        _content.Children.Add(ActionRow(
-            (T("shortcuts.add"), AddShortcut),
-            (T("shortcuts.save"), SaveHotkeys)));
     }
 
-    private UIElement HotkeyRow(HotkeyDefinition hotkey)
+    private UIElement HotkeyRow(HotkeyDefinition hotkey, IReadOnlyCollection<HotkeyDefinition> actionRows, bool firstRow)
     {
         var draft = _hotkeyDraft ?? throw new InvalidOperationException("Hotkey draft is not initialized.");
-        var panel = new StackPanel { Spacing = 8 };
-        panel.Children.Add(new TextBlock
+        var narrow = CurrentLayoutMode() == 2;
+        var grid = new Grid { ColumnSpacing = 8, RowSpacing = 4, MinHeight = 42 };
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(narrow ? 120 : 150) });
+        if (!narrow) grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(narrow ? 68 : 68) });
+        if (narrow) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        var enabled = new CheckBox
+        {
+            IsChecked = hotkey.Enabled,
+            MinWidth = 0,
+            Width = 32,
+            IsEnabled = hotkey.Key is >= 1 and <= 0xFF && !IsModifierKey(hotkey.Key),
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        SetAutomation(enabled, $"Shortcuts.Enabled.{hotkey.Id}", $"{ActionName(hotkey.Action)} {T("shortcuts.enabled")}");
+        enabled.Checked += (_, _) => { if (!hotkey.Enabled) { hotkey.Enabled = true; MarkHotkeysDirty(); } };
+        enabled.Unchecked += (_, _) => { if (hotkey.Enabled) { hotkey.Enabled = false; MarkHotkeysDirty(); } };
+        var actionLabel = new TextBlock
         {
             Text = ActionName(hotkey.Action),
             Foreground = TextBrush,
-            FontSize = 18
-        });
-        panel.Children.Add(new TextBlock
+            FontSize = 14,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextWrapping = TextWrapping.Wrap
+        };
+        var keyButton = new Button
         {
-            Text = hotkey.Enabled ? T("shortcuts.enabled") : T("shortcuts.disabled"),
-            Foreground = SecondaryTextBrush
-        });
-        panel.Children.Add(new TextBlock
+            Content = hotkey.Key == 0 ? T("shortcuts.unassigned") : hotkey.GestureText,
+            MinWidth = narrow ? 98 : 118,
+            MaxWidth = narrow ? 142 : 160,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        SetAutomation(keyButton, $"Shortcuts.Key.{hotkey.Id}", $"{ActionName(hotkey.Action)}: {keyButton.Content}");
+        ToolTipService.SetToolTip(keyButton, T("shortcuts.key"));
+        keyButton.Click += async (_, _) =>
         {
-            Text = $"{T("shortcuts.keyLabel")}: {hotkey.GestureText}",
-            Foreground = SecondaryTextBrush
-        });
-        panel.Children.Add(new TextBlock
+            if (await CaptureGestureAsync(hotkey, draft)) { MarkHotkeysDirty(); ShowShortcutsPage(); }
+        };
+        FrameworkElement? setting = null;
+        if (hotkey.Action == HotkeyActionType.SetDevice)
         {
-            Text = hotkey.Action == HotkeyActionType.SetDevice
-                ? $"{T("shortcuts.target")}: {DeviceName(hotkey.DeviceId)}"
-                : $"{T("shortcuts.volumeStep")}: {hotkey.VolumeStep}%",
-            Foreground = SecondaryTextBrush
-        });
-
-        panel.Children.Add(ActionRow(
-            (hotkey.Enabled ? T("shortcuts.disable") : T("shortcuts.enable"), () =>
+            var options = AppServices.Commands.GetDevices().Select(device => new SelectOption(device.Id,
+                $"{device.Name}{(device.IsConnected ? "" : $" ({T("devices.disconnected")})")}")).ToList();
+            if (!string.IsNullOrWhiteSpace(hotkey.DeviceId) && options.All(option => option.Value != hotkey.DeviceId))
+                options.Add(new SelectOption(hotkey.DeviceId, $"{DeviceName(hotkey.DeviceId)} ({T("devices.disconnected")})"));
+            if (string.IsNullOrWhiteSpace(hotkey.DeviceId))
+                options.Insert(0, new SelectOption("", T("shortcuts.chooseDevice")));
+            var combo = new ComboBox
             {
-                hotkey.Enabled = !hotkey.Enabled;
-                MarkHotkeysDirty();
-                ShowShortcutsPage();
-            }),
-            (T("shortcuts.action"), () =>
+                ItemsSource = options,
+                DisplayMemberPath = nameof(SelectOption.Label),
+                SelectedItem = options.FirstOrDefault(option => option.Value == hotkey.DeviceId) ?? options[0],
+                MinWidth = 112,
+                MaxWidth = 150,
+                IsEnabled = hotkey.Key is >= 1 and <= 0xFF && !IsModifierKey(hotkey.Key),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+            SetAutomation(combo, $"Shortcuts.Target.{hotkey.Id}", T("shortcuts.target"));
+            combo.SelectionChanged += (_, _) =>
             {
-                hotkey.Action = NextAction(hotkey.Action);
-                if (hotkey.Action == HotkeyActionType.SetDevice && string.IsNullOrWhiteSpace(hotkey.DeviceId))
+                if (combo.SelectedItem is SelectOption option && hotkey.DeviceId != option.Value)
+                { hotkey.DeviceId = option.Value; MarkHotkeysDirty(); }
+            };
+            setting = combo;
+        }
+        else if (hotkey.Action is HotkeyActionType.VolumeUp or HotkeyActionType.VolumeDown)
+        {
+            var number = new NumberBox { Value = Math.Clamp(hotkey.VolumeStep, 1, 100), Minimum = 1, Maximum = 100,
+                SmallChange = 1, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Compact, Width = 78,
+                IsEnabled = hotkey.Key is >= 1 and <= 0xFF && !IsModifierKey(hotkey.Key) };
+            SetAutomation(number, $"Shortcuts.Step.{hotkey.Id}", T("shortcuts.volumeStep"));
+            number.ValueChanged += (_, _) =>
+            {
+                if (double.IsNaN(number.Value)) return;
+                var next = (int)Math.Clamp(Math.Round(number.Value), 1, 100);
+                if (hotkey.VolumeStep != next)
                 {
-                    hotkey.DeviceId = AppServices.Commands.GetDevices().FirstOrDefault()?.Id;
-                }
-                MarkHotkeysDirty();
-                ShowShortcutsPage();
-            }),
-            (T("shortcuts.key"), async () =>
-            {
-                if (await CaptureGestureAsync(hotkey, draft))
-                {
+                    hotkey.VolumeStep = next;
+                    if (number.Value != next) number.Value = next;
                     MarkHotkeysDirty();
-                    ShowShortcutsPage();
                 }
-            }),
-            (T("shortcuts.device"), () =>
+            };
+            setting = new StackPanel
             {
-                hotkey.DeviceId = NextDeviceId(hotkey.DeviceId);
-                hotkey.Action = HotkeyActionType.SetDevice;
-                MarkHotkeysDirty();
-                ShowShortcutsPage();
-            }),
-            (T("shortcuts.step"), () =>
+                Orientation = Orientation.Horizontal,
+                Spacing = 4,
+                VerticalAlignment = VerticalAlignment.Center,
+                Children = { number, TextBlock("%", 13, SecondaryTextBrush) }
+            };
+        }
+        var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2, VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Right };
+        if (firstRow)
+            actions.Children.Add(InlineButton("\uE710", () => AddShortcut(hotkey.Action),
+                $"Shortcuts.Add.{hotkey.Action}", string.Format(T("shortcuts.addBindingFor"), ActionName(hotkey.Action))));
+        var remove = InlineButton("\uE74D", () =>
+        {
+            if (actionRows.Count > 1) draft.Remove(hotkey);
+            else { hotkey.Key = 0; hotkey.Modifiers = 0; hotkey.Enabled = false; }
+            MarkHotkeysDirty(); ShowShortcutsPage();
+        }, $"Shortcuts.Clear.{hotkey.Id}", T("shortcuts.clear"));
+        remove.IsEnabled = hotkey.Key != 0 || actionRows.Count > 1;
+        actions.Children.Add(remove);
+        Grid.SetColumn(enabled, 0); Grid.SetColumn(actionLabel, 1);
+        grid.Children.Add(enabled); grid.Children.Add(actionLabel);
+        if (!narrow)
+        {
+            Grid.SetColumn(keyButton, 2); Grid.SetColumn(actions, 4);
+            grid.Children.Add(keyButton); grid.Children.Add(actions);
+            if (setting is not null) { Grid.SetColumn(setting, 3); grid.Children.Add(setting); }
+        }
+        else
+        {
+            Grid.SetColumn(keyButton, 2); Grid.SetColumn(actions, 3);
+            grid.Children.Add(keyButton); grid.Children.Add(actions);
+            if (setting is not null)
             {
-                hotkey.VolumeStep = hotkey.VolumeStep >= 25 ? 1 : hotkey.VolumeStep + 1;
-                MarkHotkeysDirty();
-                ShowShortcutsPage();
-            }),
-            (T("shortcuts.delete"), () =>
-            {
-                draft.Remove(hotkey);
-                MarkHotkeysDirty();
-                ShowShortcutsPage();
-            })));
-
-        return Card(panel);
+                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                Grid.SetRow(setting, 1); Grid.SetColumn(setting, 1); Grid.SetColumnSpan(setting, 3); grid.Children.Add(setting);
+            }
+        }
+        return CompactRow(grid);
     }
 
-    private void AddShortcut()
+    private void AddShortcut(HotkeyActionType action)
     {
-        _hotkeyDraft ??= AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
-        var usedGestures = _hotkeyDraft.Select(h => (h.Modifiers, h.Key)).ToHashSet();
-        var availableKey = new uint[] { 0x41, 0x53, 0x44, 0x46, 0x26, 0x28, 0x70, 0x71, 0x72 }
-            .FirstOrDefault(key => !usedGestures.Contains((0x0002u | 0x0004u, key)));
+        _hotkeyDraft ??= ShortcutDraftService.CreateRows(AppServices.Settings.Current.Hotkeys);
         _hotkeyDraft.Add(new HotkeyDefinition
         {
-            Name = string.Format(T("shortcuts.newName"), _hotkeyDraft.Count + 1),
-            Action = HotkeyActionType.CycleDevice,
-            Modifiers = 0x0002 | 0x0004,
-            Key = availableKey == 0 ? 0x41 : availableKey,
-            Enabled = availableKey != 0
+            Name = string.Empty, Action = action, DeviceId = action == HotkeyActionType.SetDevice ? AppServices.Commands.GetDevices().FirstOrDefault()?.Id : null,
+            Modifiers = 0, Key = 0, Enabled = false
         });
         MarkHotkeysDirty();
         ShowShortcutsPage();
@@ -805,23 +947,33 @@ public sealed class MainWindow : Window
 
     private void SaveHotkeys()
     {
-        _hotkeyDraft ??= AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
+        _hotkeyDraft ??= ShortcutDraftService.CreateRows(AppServices.Settings.Current.Hotkeys);
+        if (_hotkeyDraft.Any(hotkey => hotkey.Enabled && hotkey.Key != 0 &&
+            hotkey.Action == HotkeyActionType.SetDevice && string.IsNullOrWhiteSpace(hotkey.DeviceId)))
+        {
+            SetStatus(T("shortcuts.targetRequired"));
+            return;
+        }
         IReadOnlyList<HotkeyRegistrationFailure> failures;
         try
         {
-            failures = AppServices.Hotkeys.SaveAndReload(_hotkeyDraft);
+            failures = AppServices.Hotkeys.SaveAndReload(ShortcutDraftService.ToSettings(_hotkeyDraft));
+            AppServices.SetStartupHotkeyFailures(failures);
         }
         catch (Exception ex)
         {
             _hasUnsavedHotkeyChanges = true;
-            SetStatus(ex.Message);
+            ShowPersistenceError(ex.Message);
             return;
         }
 
         _hasUnsavedHotkeyChanges = failures.Count != 0;
         if (failures.Count == 0)
         {
-            _hotkeyDraft = AppServices.Settings.Current.Hotkeys.Select(CloneHotkey).ToList();
+            _hotkeyDraft = ShortcutDraftService.CreateRows(AppServices.Settings.Current.Hotkeys);
+            ShowShortcutsPage();
+            SetStatus(T("shortcuts.saved"));
+            return;
         }
         SetStatus(failures.Count == 0
             ? T("shortcuts.saved")
@@ -874,9 +1026,11 @@ public sealed class MainWindow : Window
             PrimaryButtonText = T("shortcuts.save"),
             CloseButtonText = T("common.cancel"),
             DefaultButton = ContentDialogButton.Primary,
-            IsPrimaryButtonEnabled = true
+            IsPrimaryButtonEnabled = hotkey.Key is >= 1 and <= 0xFF && !IsModifierKey(hotkey.Key)
         };
         SetAutomation(dialog, "Shortcuts.CaptureDialog", T("shortcuts.key"));
+        _captureDialog = dialog;
+        _captureCancelled = false;
 
         var capturedModifiers = hotkey.Modifiers;
         var capturedKey = hotkey.Key;
@@ -900,10 +1054,11 @@ public sealed class MainWindow : Window
             error.Text = duplicate
                 ? string.Format(T("shortcuts.registrationFailed"), 1, preview.GestureText)
                 : "";
-            dialog.IsPrimaryButtonEnabled = !duplicate;
+            dialog.IsPrimaryButtonEnabled = capturedKey is >= 1 and <= 0xFF && !IsModifierKey(capturedKey) && !duplicate;
         }
 
-        uint pressedModifiers = 0;
+        uint pressedModifiers = CurrentModifiers();
+        var consumedKeys = new HashSet<uint>();
         LowLevelKeyboardProc hookCallback = (code, wParam, lParam) =>
         {
             const int keyDown = 0x0100;
@@ -911,14 +1066,27 @@ public sealed class MainWindow : Window
             const int sysKeyDown = 0x0104;
             const int sysKeyUp = 0x0105;
             var message = wParam.ToInt32();
+            if (code < 0 || GetForegroundWindow() != Hwnd)
+            {
+                return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+            }
             if (code >= 0 && message is keyDown or sysKeyDown)
             {
                 var key = unchecked((uint)Marshal.ReadInt32(lParam));
+                if (key is 0x09 or 0x0D or 0x1B)
+                {
+                    return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+                }
                 var modifier = ModifierFlag(key);
                 if (modifier != 0)
                 {
                     pressedModifiers |= modifier;
+                    if (modifier != 0x0008)
+                    {
+                        return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+                    }
                 }
+                consumedKeys.Add(key);
                 var modifiers = pressedModifiers;
                 DispatcherQueue.TryEnqueue(() => ApplyCapturedKey(key, modifiers));
                 return new IntPtr(1);
@@ -927,8 +1095,13 @@ public sealed class MainWindow : Window
             if (code >= 0 && message is keyUp or sysKeyUp)
             {
                 var key = unchecked((uint)Marshal.ReadInt32(lParam));
-                pressedModifiers &= ~ModifierFlag(key);
-                return new IntPtr(1);
+                var modifier = ModifierFlag(key);
+                pressedModifiers &= ~modifier;
+                if (modifier != 0 && modifier != 0x0008)
+                    return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
+                return consumedKeys.Remove(key)
+                    ? new IntPtr(1)
+                    : CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
             }
 
             return CallNextHookEx(IntPtr.Zero, code, wParam, lParam);
@@ -936,7 +1109,9 @@ public sealed class MainWindow : Window
         var hook = SetWindowsHookEx(13, hookCallback, GetModuleHandle(null), 0);
         if (hook == IntPtr.Zero)
         {
-            throw new InvalidOperationException($"Keyboard capture could not start ({Marshal.GetLastWin32Error()}).");
+            _captureDialog = null;
+            ShowPersistenceError($"Keyboard capture could not start ({Marshal.GetLastWin32Error()}).");
+            return false;
         }
 
         ContentDialogResult result;
@@ -944,13 +1119,19 @@ public sealed class MainWindow : Window
         {
             result = await dialog.ShowAsync();
         }
+        catch (Exception ex)
+        {
+            ShowPersistenceError(ex.Message);
+            return false;
+        }
         finally
         {
+            _captureDialog = null;
             UnhookWindowsHookEx(hook);
             GC.KeepAlive(hookCallback);
         }
 
-        if (result != ContentDialogResult.Primary)
+        if (_captureCancelled || result != ContentDialogResult.Primary)
         {
             return false;
         }
@@ -996,6 +1177,7 @@ public sealed class MainWindow : Window
         _content.Children.Clear();
         AddHeader(T("settings.title"), T("settings.subtitle"));
         _content.Children.Add(_status);
+        RestoreStartupHotkeyStatus();
         _content.Children.Add(SettingsOptionCard(
             T("settings.language"),
             T("settings.languageDescription"),
@@ -1005,8 +1187,9 @@ public sealed class MainWindow : Window
                 .ToList(),
             value =>
             {
-                AppServices.Settings.Current.Language = value;
-                AppServices.Settings.Save();
+                var previous = AppServices.Settings.Current.Language;
+                try { AppServices.Settings.Current.Language = value; AppServices.Settings.Save(); }
+                catch (Exception ex) { AppServices.Settings.Current.Language = previous; ShowPersistenceError(ex.Message); ShowSettingsPage(); return; }
                 BuildNavigationItems();
                 ApplyTheme();
                 SelectPage(SettingsTag);
@@ -1023,8 +1206,9 @@ public sealed class MainWindow : Window
             ],
             value =>
             {
-                AppServices.Settings.Current.Theme = value;
-                AppServices.Settings.Save();
+                var previous = AppServices.Settings.Current.Theme;
+                try { AppServices.Settings.Current.Theme = value; AppServices.Settings.Save(); }
+                catch (Exception ex) { AppServices.Settings.Current.Theme = previous; ShowPersistenceError(ex.Message); ShowSettingsPage(); return; }
                 ApplyTheme();
                 ShowSettingsPage();
                 SetStatus(T("settings.applied"));
@@ -1035,8 +1219,9 @@ public sealed class MainWindow : Window
             AppServices.Settings.Current.ShowMainWindowOnStartup,
             value =>
             {
-                AppServices.Settings.Current.ShowMainWindowOnStartup = value;
-                AppServices.Settings.Save();
+                var previous = AppServices.Settings.Current.ShowMainWindowOnStartup;
+                try { AppServices.Settings.Current.ShowMainWindowOnStartup = value; AppServices.Settings.Save(); }
+                catch { AppServices.Settings.Current.ShowMainWindowOnStartup = previous; throw; }
                 SetStatus(T("settings.applied"));
                 return Task.FromResult(value);
             }));
@@ -1059,9 +1244,10 @@ public sealed class MainWindow : Window
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(260) });
 
-        var text = new StackPanel { Spacing = 4 };
+        var narrow = CurrentLayoutMode() == 2;
+        var text = new StackPanel { Spacing = 2 };
         text.Children.Add(TextBlock(title, 16, TextBrush));
-        text.Children.Add(TextBlock(description, 14, SecondaryTextBrush));
+        text.Children.Add(TextBlock(description, 12, SecondaryTextBrush));
 
         var comboBox = new ComboBox
         {
@@ -1069,7 +1255,8 @@ public sealed class MainWindow : Window
             DisplayMemberPath = nameof(SelectOption.Label),
             SelectedItem = options.FirstOrDefault(option => string.Equals(option.Value, selectedValue, StringComparison.OrdinalIgnoreCase)) ?? options[0],
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            MinWidth = 220
+            MinWidth = narrow ? 160 : 200,
+            MaxWidth = 260
         };
         AddFallbackWinUiResources(comboBox.Resources);
         SetAutomation(comboBox, $"Settings.Option.{++_automationSequence}", title);
@@ -1082,11 +1269,21 @@ public sealed class MainWindow : Window
             }
         };
 
+        if (narrow)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(comboBox, 1);
+            Grid.SetColumnSpan(text, 2);
+            Grid.SetColumnSpan(comboBox, 2);
+            comboBox.HorizontalAlignment = HorizontalAlignment.Left;
+            comboBox.Width = 240;
+        }
         Grid.SetColumn(text, 0);
-        Grid.SetColumn(comboBox, 1);
+        Grid.SetColumn(comboBox, narrow ? 0 : 1);
         grid.Children.Add(text);
         grid.Children.Add(comboBox);
-        return Card(grid);
+        return CompactRow(grid);
     }
 
     private UIElement SettingsToggleCard(
@@ -1100,9 +1297,10 @@ public sealed class MainWindow : Window
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
-        var text = new StackPanel { Spacing = 4 };
+        var narrow = CurrentLayoutMode() == 2;
+        var text = new StackPanel { Spacing = 2 };
         text.Children.Add(TextBlock(title, 16, TextBrush));
-        text.Children.Add(TextBlock(description, 14, SecondaryTextBrush));
+        text.Children.Add(TextBlock(description, 12, SecondaryTextBrush));
 
         var toggle = new ToggleSwitch
         {
@@ -1138,7 +1336,7 @@ public sealed class MainWindow : Window
             {
                 suppressChange = true;
                 toggle.IsOn = !requested;
-                SetStatus(ex.Message);
+                ShowPersistenceError(ex.Message);
             }
             finally
             {
@@ -1147,8 +1345,15 @@ public sealed class MainWindow : Window
             }
         };
 
+        if (narrow)
+        {
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetRow(toggle, 1);
+            toggle.HorizontalAlignment = HorizontalAlignment.Left;
+        }
         Grid.SetColumn(text, 0);
-        Grid.SetColumn(toggle, 1);
+        Grid.SetColumn(toggle, narrow ? 0 : 1);
         grid.Children.Add(text);
         grid.Children.Add(toggle);
         if (getActualState is not null)
@@ -1156,7 +1361,7 @@ public sealed class MainWindow : Window
             _ = SyncActualStateAsync();
         }
 
-        return Card(grid);
+        return CompactRow(grid);
 
         async Task SyncActualStateAsync()
         {
@@ -1174,20 +1379,26 @@ public sealed class MainWindow : Window
                 suppressChange = false;
                 if (AppServices.Settings.Current.StartWithWindows != actual.Value)
                 {
+                    var previous = AppServices.Settings.Current.StartWithWindows;
                     AppServices.Settings.Current.StartWithWindows = actual.Value;
-                    AppServices.Settings.Save();
+                    try { AppServices.Settings.Save(); }
+                    catch (Exception ex) { AppServices.Settings.Current.StartWithWindows = previous; ShowPersistenceError(ex.Message); }
                 }
             }
             catch (Exception ex)
             {
                 suppressChange = false;
-                SetStatus(ex.Message);
+                ShowPersistenceError(ex.Message);
             }
         }
     }
 
     private async Task<bool> SetStartWithWindowsAsync(bool enabled)
     {
+        if (AppServices.Settings.IsReadOnlyDueToLoadFailure)
+        {
+            throw new InvalidOperationException(AppServices.Settings.PersistenceError);
+        }
         var previous = AppServices.Settings.Current.StartWithWindows;
         AppServices.Settings.Current.StartWithWindows = enabled;
 
@@ -1206,7 +1417,15 @@ public sealed class MainWindow : Window
         }
 
         AppServices.Settings.Current.StartWithWindows = actual;
-        AppServices.Settings.Save();
+        try { AppServices.Settings.Save(); }
+        catch
+        {
+            // Settings persistence and the external Windows registration must
+            // remain consistent if saving fails after changing the OS state.
+            await StartupRegistration.SetEnabledAsync(previous);
+            AppServices.Settings.Current.StartWithWindows = previous;
+            throw;
+        }
         SetStatus(StartupRegistrationStatusText(enabled, result, actual));
         return actual;
     }
@@ -1240,7 +1459,7 @@ public sealed class MainWindow : Window
         AddHeader(T("donation.title"), T("donation.subtitle"));
 
         var panel = new StackPanel { Spacing = 14 };
-        panel.Children.Add(TextBlock(T("donation.message"), 14, SecondaryTextBrush));
+        panel.Children.Add(TextBlock(T("donation.message"), 13, SecondaryTextBrush));
 
         var fallbackText = new TextBlock
         {
@@ -1270,37 +1489,18 @@ public sealed class MainWindow : Window
         ToolTipService.SetToolTip(donationButton, DonationUrl);
         panel.Children.Add(donationButton);
 
-        var link = new HyperlinkButton
-        {
-            Content = T("donation.openBuyMeACoffee"),
-            NavigateUri = new Uri(DonationUrl),
-            Padding = new Thickness(0),
-            HorizontalAlignment = HorizontalAlignment.Left
-        };
-        SetAutomation(link, "Donation.Link", T("donation.openBuyMeACoffee"));
-        ToolTipService.SetToolTip(link, DonationUrl);
         var urlText = TextBlock(DonationUrl, 12, SecondaryTextBrush);
+        panel.Children.Add(urlText);
 
-        panel.Children.Add(new StackPanel
-        {
-            Spacing = 2,
-            Margin = new Thickness(1, -6, 0, 0),
-            Children =
-            {
-                link,
-                urlText
-            }
-        });
-
-        _content.Children.Add(Card(panel));
+        _content.Children.Add(CompactRow(panel));
     }
 
     private UIElement AppInfoCard()
     {
         var grid = new Grid
         {
-            RowSpacing = 12,
-            ColumnSpacing = 28
+            RowSpacing = 6,
+            ColumnSpacing = 20
         };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -1310,16 +1510,12 @@ public sealed class MainWindow : Window
         AddInfoRow(grid, 2, T("about.author"), "@mmiyaji");
         AddInfoLinkRow(grid, 3, T("about.web"), "https://ruhenheim.org");
 
-        return Card(grid);
+        return CompactRow(grid);
     }
 
     private UIElement PrivacyInfoCard()
     {
-        var panel = new StackPanel { Spacing = 12 };
-        panel.Children.Add(TextBlock(T("about.privacy"), 15, TextBrush));
-        panel.Children.Add(ActionRow(
-            (T("about.openAuthorSite"), () => _ = Windows.System.Launcher.LaunchUriAsync(new Uri("https://ruhenheim.org")))));
-        return Card(panel);
+        return CompactRow(TextBlock(T("about.privacy"), 13, SecondaryTextBrush));
     }
 
     private UIElement ExitApplicationCard()
@@ -1350,7 +1546,7 @@ public sealed class MainWindow : Window
         grid.Children.Add(icon);
         grid.Children.Add(text);
         grid.Children.Add(button);
-        return Card(grid);
+        return CompactRow(grid);
     }
 
     private void AddInfoRow(Grid grid, int row, string label, string value)
@@ -1392,7 +1588,7 @@ public sealed class MainWindow : Window
         var informationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         if (!string.IsNullOrWhiteSpace(informationalVersion))
         {
-            return informationalVersion;
+            return informationalVersion.Split('+', 2)[0];
         }
 
         return assembly.GetName().Version?.ToString() ?? "Unknown";
@@ -1404,35 +1600,30 @@ public sealed class MainWindow : Window
         {
             Text = title,
             Foreground = TextBrush,
-            FontSize = 30,
-            Margin = new Thickness(0, 0, 0, 6)
+            FontSize = 24,
+            Margin = new Thickness(0, 0, 0, 4)
         });
         _content.Children.Add(new TextBlock
         {
             Text = subtitle,
             Foreground = SecondaryTextBrush,
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 18)
+            Margin = new Thickness(0, 0, 0, 12)
         });
     }
 
     private StackPanel ActionRow(params (string Label, Action Action)[] actions)
     {
-        var compact = CurrentLayoutMode() != 0;
         var row = new StackPanel
         {
-            Orientation = compact ? Orientation.Vertical : Orientation.Horizontal,
+            Orientation = Orientation.Horizontal,
             Spacing = 8,
-            Margin = new Thickness(0, 8, 0, 0),
-            HorizontalAlignment = compact ? HorizontalAlignment.Stretch : HorizontalAlignment.Left
+            Margin = new Thickness(0, 6, 0, 0),
+            HorizontalAlignment = HorizontalAlignment.Left
         };
         foreach (var action in actions)
         {
             var button = ActionButton(action.Label, action.Action);
-            if (compact)
-            {
-                button.HorizontalAlignment = HorizontalAlignment.Stretch;
-            }
             row.Children.Add(button);
         }
 
@@ -1444,8 +1635,10 @@ public sealed class MainWindow : Window
         var button = new Button
         {
             Content = text,
-            Padding = new Thickness(12, 8, 12, 8),
-            MinWidth = 84
+            Padding = new Thickness(8, 4, 8, 4),
+            MinWidth = 0,
+            MinHeight = 32,
+            MaxWidth = 260
         };
         AddFallbackWinUiResources(button.Resources);
         SetAutomation(button, $"{_currentPageTag}.Action.{++_automationSequence}", text);
@@ -1464,8 +1657,8 @@ public sealed class MainWindow : Window
                 BorderBrush = StrokeBrush,
                 BorderThickness = new Thickness(1),
                 CornerRadius = new CornerRadius(8),
-                Padding = new Thickness(16),
-                Margin = new Thickness(0, 0, 0, 10),
+                Padding = new Thickness(10),
+                Margin = new Thickness(0, 0, 0, 6),
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch
             };
@@ -1480,10 +1673,43 @@ public sealed class MainWindow : Window
             BorderBrush = StrokeBrush,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
-            Padding = new Thickness(16),
-            Margin = new Thickness(0, 0, 0, 10),
+            Padding = new Thickness(10),
+            Margin = new Thickness(0, 0, 0, 6),
             Child = child
         };
+    }
+
+    private UIElement CompactRow(UIElement child)
+    {
+        return new Border
+        {
+            Background = PanelBrush,
+            BorderBrush = StrokeBrush,
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(6),
+            Padding = new Thickness(8, 5, 8, 5),
+            Margin = new Thickness(0, 0, 0, 4),
+            Child = child
+        };
+    }
+
+    private Button InlineButton(string glyphOrText, Action action, string automationId, string accessibleName)
+    {
+        var button = new Button
+        {
+            Content = glyphOrText.Length == 1 && glyphOrText[0] >= '\uE000'
+                ? new FontIcon { Glyph = glyphOrText, FontSize = 12 }
+                : glyphOrText,
+            Padding = new Thickness(6, 3, 6, 3),
+            MinWidth = 30,
+            MinHeight = 30,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        AddFallbackWinUiResources(button.Resources);
+        SetAutomation(button, automationId, accessibleName);
+        ToolTipService.SetToolTip(button, accessibleName);
+        button.Click += (_, _) => action();
+        return button;
     }
 
     private static TextBlock TextBlock(string text, double fontSize, Brush brush)
@@ -1506,13 +1732,6 @@ public sealed class MainWindow : Window
             : new Thickness(0, 0, 0, 14);
     }
 
-    private static HotkeyActionType NextAction(HotkeyActionType current)
-    {
-        var values = Enum.GetValues<HotkeyActionType>();
-        var index = Array.IndexOf(values, current);
-        return values[(index + 1) % values.Length];
-    }
-
     private static HotkeyDefinition CloneHotkey(HotkeyDefinition hotkey) => new()
     {
         Id = hotkey.Id,
@@ -1531,13 +1750,6 @@ public sealed class MainWindow : Window
         AutomationProperties.SetName(element, name);
     }
 
-    private static uint NextKey(uint current)
-    {
-        uint[] keys = [0x41, 0x53, 0x44, 0x46, 0x26, 0x28, 0x70, 0x71, 0x72];
-        var index = Array.IndexOf(keys, current);
-        return keys[(index + 1 + keys.Length) % keys.Length];
-    }
-
     private string ActionName(HotkeyActionType action)
     {
         return action switch
@@ -1547,6 +1759,7 @@ public sealed class MainWindow : Window
             HotkeyActionType.VolumeUp => T("action.volumeUp"),
             HotkeyActionType.VolumeDown => T("action.volumeDown"),
             HotkeyActionType.MuteToggle => T("action.muteToggle"),
+            HotkeyActionType.MicrophoneMuteToggle => T("action.microphoneMuteToggle"),
             _ => action.ToString()
         };
     }
@@ -1577,18 +1790,6 @@ public sealed class MainWindow : Window
         }
 
         return (primary, secondary);
-    }
-
-    private string? NextDeviceId(string? current)
-    {
-        var devices = AppServices.Commands.GetDevices();
-        if (devices.Count == 0)
-        {
-            return null;
-        }
-
-        var index = devices.ToList().FindIndex(device => device.Id == current);
-        return devices[(index + 1 + devices.Count) % devices.Count].Id;
     }
 
     private string DeviceName(string? deviceId)

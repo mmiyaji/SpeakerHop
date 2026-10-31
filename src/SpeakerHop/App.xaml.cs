@@ -21,13 +21,33 @@ public partial class App : Microsoft.UI.Xaml.Application
         AppServices.Initialize(_window, loadSettings: false);
         _window.ShowHome();
 
-        if (!AppServices.Settings.Current.InitialLaunchCompleted ||
+        if (Program.ConsumeShowSettingsRequest())
+        {
+            _window.ShowSettings();
+        }
+        else if (!AppServices.Settings.Current.InitialLaunchCompleted ||
             AppServices.Settings.Current.ShowMainWindowOnStartup)
         {
             ShowMainWindow();
         }
 
         AppServices.Settings.MarkInitialLaunchCompleted();
+        if (AppServices.Settings.PersistenceError is { } persistenceError)
+        {
+            _window.ShowPersistenceError(persistenceError);
+            AppServices.Tray.ShowPersistenceError(persistenceError);
+        }
+    }
+
+    internal void QueueShowSettings()
+    {
+        _window?.DispatcherQueue.TryEnqueue(() =>
+        {
+            if (Program.ConsumeShowSettingsRequest() && !AppServices.IsExiting)
+            {
+                _window.ShowSettings();
+            }
+        });
     }
 
     private void ShowMainWindow()
