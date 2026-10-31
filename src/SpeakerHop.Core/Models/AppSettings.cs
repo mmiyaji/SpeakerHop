@@ -16,23 +16,23 @@ public sealed class AppSettings
         {
             Name = "出力デバイスを順番に切り替え",
             Action = HotkeyActionType.CycleDevice,
-            Modifiers = 0x0002 | 0x0004,
-            Key = 0x41
+            Modifiers = 0x0001 | 0x0002 | 0x0004,
+            Key = 0x78
         },
         new()
         {
             Name = "音量を上げる",
             Action = HotkeyActionType.VolumeUp,
-            Modifiers = 0x0002 | 0x0004,
-            Key = 0x26,
+            Modifiers = 0x0001 | 0x0002 | 0x0004,
+            Key = 0x7A,
             VolumeStep = 5
         },
         new()
         {
             Name = "音量を下げる",
             Action = HotkeyActionType.VolumeDown,
-            Modifiers = 0x0002 | 0x0004,
-            Key = 0x28,
+            Modifiers = 0x0001 | 0x0002 | 0x0004,
+            Key = 0x79,
             VolumeStep = 5
         }
     ];

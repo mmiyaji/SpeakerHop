@@ -216,7 +216,7 @@ public sealed class SettingsService
             hotkey.Action = Enum.IsDefined(hotkey.Action) ? hotkey.Action : HotkeyActionType.CycleDevice;
             hotkey.DeviceId = string.IsNullOrWhiteSpace(hotkey.DeviceId) ? null : hotkey.DeviceId.Trim();
             hotkey.Modifiers &= 0x000F;
-            hotkey.Key = hotkey.Key is >= 1 and <= 0xFF ? hotkey.Key : 0x41;
+            hotkey.Key = hotkey.Key is >= 1 and <= 0xFF ? hotkey.Key : new HotkeyDefinition().Key;
             hotkey.VolumeStep = (int)Math.Clamp(Math.Abs((long)hotkey.VolumeStep), 1, 100);
         }
 

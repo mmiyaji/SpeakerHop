@@ -7,6 +7,21 @@ namespace SpeakerHop.Tests;
 public sealed class SettingsServiceTests
 {
     [Fact]
+    public void Load_PreservesExistingUserGestures()
+    {
+        using var directory = TemporaryDirectory.Create();
+        var path = Path.Combine(directory.Path, "settings.json");
+        var settings = new AppSettings();
+        settings.Hotkeys[0].Modifiers = 6;
+        settings.Hotkeys[0].Key = 0x41;
+        File.WriteAllText(path, JsonSerializer.Serialize(settings));
+        var service = new SettingsService(path);
+        service.Load();
+        Assert.Equal(6u, service.Current.Hotkeys[0].Modifiers);
+        Assert.Equal(0x41u, service.Current.Hotkeys[0].Key);
+    }
+
+    [Fact]
     public void Constructor_RejectsEmptyPath()
     {
         Assert.Throws<ArgumentException>(() => new SettingsService(" "));
@@ -150,7 +165,7 @@ public sealed class SettingsServiceTests
         Assert.NotEqual(Guid.Empty, hotkey.Id);
         Assert.Equal(HotkeyActionType.CycleDevice, hotkey.Action);
         Assert.Equal((uint)0x000F, hotkey.Modifiers);
-        Assert.Equal((uint)0x41, hotkey.Key);
+        Assert.Equal((uint)0x78, hotkey.Key);
         Assert.Equal(100, hotkey.VolumeStep);
     }
 

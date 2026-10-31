@@ -19,6 +19,16 @@ The README image uses an actual light-theme English SpeakerHop screenshot embedd
 The existing **MuteToggle** action continues to mute the default output device. **MicrophoneMuteToggle** mutes the default capture endpoint for the Multimedia role; it does not change or use a separately assigned Communications default device. Adding the microphone action does not assign it a shortcut automatically.
 - MSIX manifest and packaging script are included for Microsoft Store preparation.
 
+## Default shortcuts
+
+| Action | Shortcut |
+| --- | --- |
+| Cycle output device | Ctrl + Alt + Shift + F9 |
+| Volume down | Ctrl + Alt + Shift + F10 |
+| Volume up | Ctrl + Alt + Shift + F11 |
+
+These defaults apply to new settings. Updates preserve saved shortcuts; all bindings can be changed on the Shortcuts page. Other actions are initially unassigned.
+
 ## Build
 
 Use Visual Studio Build Tools MSBuild. `dotnet build` may fail on machines where the .NET SDK cannot find Appx/Pri packaging tasks. The app targets .NET 8 and publishes self-contained, so the target PC does not need a separately installed .NET runtime.

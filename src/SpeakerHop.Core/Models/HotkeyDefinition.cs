@@ -8,8 +8,8 @@ public sealed class HotkeyDefinition
     public string Name { get; set; } = "新しいショートカット";
     public HotkeyActionType Action { get; set; } = HotkeyActionType.CycleDevice;
     public string? DeviceId { get; set; }
-    public uint Modifiers { get; set; } = 0x0002 | 0x0004;
-    public uint Key { get; set; } = 0x41;
+    public uint Modifiers { get; set; } = 0x0001 | 0x0002 | 0x0004;
+    public uint Key { get; set; } = 0x78;
     public int VolumeStep { get; set; } = 5;
     public bool Enabled { get; set; } = true;
 
