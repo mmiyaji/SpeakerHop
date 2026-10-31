@@ -10,6 +10,7 @@ public static class Program
     private static App? _app;
     private static Mutex? _singleInstanceMutex;
     private static bool _ownsSingleInstanceMutex;
+    private static SingleInstanceLease? _singleInstanceLease;
     private static ActivationChannel? _activationChannel;
     private static int _showSettingsRequested;
 
@@ -39,6 +40,25 @@ public static class Program
 
             _ownsSingleInstanceMutex = true;
 
+            // The named mutex above is retained to recognize already-running legacy builds.
+            // Packaged applications can receive package-private namespaces for named kernel
+            // objects, so use a profile-root file lease as the authoritative cross-build gate.
+            var sessionId = System.Diagnostics.Process.GetCurrentProcess().SessionId;
+            var leasePath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".speakerhop",
+                $"instance-{sessionId}.lock");
+            _singleInstanceLease = SingleInstanceLease.TryAcquire(leasePath);
+            if (_singleInstanceLease is null)
+            {
+                if (!IsStartupLaunch(args))
+                {
+                    ActivationChannel.RequestSettingsAsync(ActivationPipeName, TimeSpan.FromSeconds(2))
+                        .GetAwaiter().GetResult();
+                }
+                return;
+            }
+
             _activationChannel = new ActivationChannel(ActivationPipeName, () =>
             {
                 Interlocked.Exchange(ref _showSettingsRequested, 1);
@@ -58,6 +78,7 @@ public static class Program
         finally
         {
             _activationChannel?.Dispose();
+            _singleInstanceLease?.Dispose();
             if (_ownsSingleInstanceMutex)
             {
                 _singleInstanceMutex?.ReleaseMutex();

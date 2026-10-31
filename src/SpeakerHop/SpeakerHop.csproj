@@ -5,7 +5,7 @@
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
     <RootNamespace>SpeakerHop</RootNamespace>
     <AssemblyName>SpeakerHop</AssemblyName>
-    <Version>1.0.35.0</Version>
+    <Version>1.0.36.0</Version>
     <Authors>mmiyaji</Authors>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\App.ico</ApplicationIcon>
