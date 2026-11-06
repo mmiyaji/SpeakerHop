@@ -18,4 +18,4 @@ CSS、言語メニュー、テーマ切り替え、GLightbox は隣の Chat Agen
 - このリポジトリの Actions secrets に `CLOUDFLARE_ACCOUNT_ID` と `CLOUDFLARE_API_TOKEN` を登録します。トークンは対象アカウントの Pages 編集権限に限定し、値をコミットしないでください。他リポジトリのトークンは共用しません。
 - `node scripts/check-site.mjs` で公開前の静的検証を実行できます。
 - 手動再配信は GitHub Actions の `Cloudflare Pages` → `Run workflow`（`main`）から実行できます。
-- 初期 URL は Cloudflare が割り当てる Pages URL です。カスタムドメインは別途設定します。割り当てが `speakerhop.pages.dev` と異なる場合は `robots.txt` と `sitemap.xml` を更新してください。
+- 公開 URL は https://speakerhop.ruhenheim.org/ です。Cloudflare Pages のカスタムドメインとして設定し、DNS は `speakerhop.pages.dev` を指す CNAME を使用します。
